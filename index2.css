@@ -40,21 +40,25 @@ header {
   align-items: center;
 }
 
-/* Logo container sa diskretnom sivkastom pozadinom */
+/* Logo container sa fade efektom */
 .logo-box {
-  background: rgba(200, 200, 200, 0.25); /* providna siva ispod loga */
-  padding: 0.3rem 0.6rem;
-  border-radius: 8px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255,109,26,0.85) 0%,   /* jaka narandžasta odmah uz logo */
+    rgba(255,109,26,0.6) 25%,   /* srednji prelaz */
+    rgba(0,0,0,0) 65%           /* mekano nestaje u crnu */
+  );
 }
 
 .logo-box img {
   height: 80px;
-  object-fit: contain;
   display: block;
-  filter: drop-shadow(0 0 6px rgba(255,109,26,0.5));
+  filter: drop-shadow(0 0 15px rgba(255,109,26,0.9));
 }
 
 .navbar ul {
