@@ -25,7 +25,12 @@ function render(data) {
   }).join('') : '<tr><td colspan="4" class="empty-state">Još nema preduzeća.</td></tr>';
 }
 
-async function load() { try { render(await callAdmin('list')); } catch (error) { list.innerHTML = `<tr><td colspan="4" class="empty-state">${error.message}</td></tr>`; setMessage('Nemate administratorski pristup ili funkcija nije objavljena.', true); } }
+function renderLogs(logs = []) {
+  const logList = document.querySelector('#admin-log-list');
+  logList.innerHTML = logs.length ? logs.map(log => `<tr><td>${new Date(log.created_at).toLocaleString('sr-RS')}</td><td>${log.admin_email || 'Administrator'}</td><td>${log.action === 'create_company' ? 'Kreirano preduzeće' : 'Kreiran korisnički nalog'}</td><td>${log.details?.name || log.details?.email || '—'}</td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema administratorskih radnji.</td></tr>';
+}
+
+async function load() { try { const data = await callAdmin('list'); render(data); renderLogs(data.logs); } catch (error) { list.innerHTML = `<tr><td colspan="4" class="empty-state">${error.message}</td></tr>`; setMessage('Nemate administratorski pristup ili funkcija nije objavljena.', true); } }
 
 companyForm.addEventListener('submit', async event => {
   event.preventDefault(); const values = Object.fromEntries(new FormData(companyForm));
