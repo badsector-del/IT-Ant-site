@@ -98,3 +98,4 @@ function renderDashboard() {
 }
 
 renderDashboard();
+if (window.location.hash === '#novi-racun') openModal('invoice');

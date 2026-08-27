@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Računi | IT ANT Poslovanje</title>
+  <link rel="stylesheet" href="poslovanje.css?v=5">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="index.html"><img src="Logo-Transparent.png" alt="IT ANT"><span>Poslovanje</span></a>
+      <nav class="side-nav" aria-label="Glavna navigacija aplikacije">
+        <a href="poslovanje.html"><span>⌂</span> Pregled</a>
+        <a href="komitenti.html"><span>◉</span> Komitenti</a>
+        <a class="active" href="racuni.html"><span>▣</span> Računi</a>
+        <a href="poslovanje.html#troskovi"><span>↗</span> Troškovi</a>
+        <a href="poslovanje.html#rokovi"><span>◷</span> Rokovi</a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot"></span> Sve je ažurno</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="app-header"><div><p class="overline">Finansije</p><h1>Računi</h1></div><a class="primary-action" href="poslovanje.html#novi-racun">+ Novi račun</a></header>
+      <section class="panel module-intro"><p>Pregled izdatih računa i njihovih stavki na jednom mestu.</p><span>Ovo su interni nacrti računa. Fiskalizacija i e-fakture se povezuju u posebnom koraku.</span></section>
+      <section class="panel invoice-module"><div class="invoice-toolbar"><div><p class="overline">Evidencija</p><h2>Svi računi</h2></div><label class="filter-label">Status<select id="status-filter"><option value="all">Svi statusi</option><option value="paid">Plaćeni</option><option value="pending">Čekaju uplatu</option></select></label></div><div class="table-wrap"><table><thead><tr><th>Broj</th><th>Komitent</th><th>Datum</th><th>Stavke</th><th>Iznos</th><th>Status</th></tr></thead><tbody id="invoice-module-list"><tr><td colspan="6" class="empty-state">Još nema unetih računa.</td></tr></tbody></table></div></section>
+      <section class="panel invoice-detail" id="invoice-detail" hidden><div class="panel-heading"><div><p class="overline">Detalji računa</p><h2 id="detail-title">Izaberite račun</h2></div><button class="table-action" id="close-detail">Zatvori</button></div><div id="detail-content"></div></section>
+    </main>
+  </div>
+  <script src="racuni.js?v=1"></script>
+</body>
+</html>
