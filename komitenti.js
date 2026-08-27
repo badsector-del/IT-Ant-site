@@ -1,5 +1,4 @@
 const storageKey = 'it-ant-clients';
-const resetKey = 'it-ant-demo-reset-v2';
 const modal = document.querySelector('#modal');
 const form = document.querySelector('#komitent-form');
 const list = document.querySelector('#komitent-list');
