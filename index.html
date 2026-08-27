@@ -16,7 +16,18 @@
       </a>
       <ul>
         <li><a href="#top">Početna</a></li>
-        <li><a href="#usluge">Usluge</a></li>
+        <li class="nav-dropdown">
+          <a href="#usluge" class="nav-dropdown-toggle">Usluge</a>
+          <div class="nav-dropdown-menu" aria-label="Lista usluga">
+            <a href="1st-line-support.html">1st Line Support</a>
+            <a href="sistemska-administracija.html">Sistemska administracija</a>
+            <a href="mrezna-infrastruktura.html">Mrežna infrastruktura</a>
+            <a href="serveri-i-storage.html">Serveri i storage</a>
+            <a href="cloud-resenja.html">Cloud rešenja</a>
+            <a href="bezbednost.html">Bezbednost</a>
+          </div>
+        </li>
+        <li><a href="#o-nama">O nama</a></li>
         <li><a href="#kontakt">Kontakt</a></li>
       </ul>
     </nav>
@@ -24,46 +35,106 @@
 
   <!-- HERO SEKCIJA -->
   <section id="top" class="hero">
-    <h1>IT USLUGE, PROJEKTOVANJE I ODRŽAVANJE IT SISTEMA</h1>
-    <p>1st line support, sistem administracija, mreže, storage, serveri i sve što je vašem poslovanju potrebno da radi bez zastoja</p>
-    <a href="#kontakt" class="btn">Kontaktirajte nas</a>
+    <div class="hero-copy">
+      <p class="eyebrow">IT podrška za mala i srednja preduzeća</p>
+      <h1>IT usluge, projektovanje i održavanje sistema</h1>
+      <p class="lead">1st line support, sistem administracija, mreže, storage, serveri i sve što je vašem poslovanju neophodno za svakodnevno pouzdano funkcionisanje.</p>
+      <div class="hero-actions">
+        <a href="#kontakt" class="btn">Kontaktirajte nas</a>
+        <a href="#usluge" class="btn btn-secondary">Pogledaj usluge</a>
+      </div>
+    </div>
+
+    <div class="hero-panel">
+      <div class="hero-stat">
+        <span class="stat-value">Brzo</span>
+        <span class="stat-label">reagovanje kada je najpotrebnije</span>
+      </div>
+      <div class="hero-stat">
+        <span class="stat-value">Pouzdano</span>
+        <span class="stat-label">održavanje i stabilnost sistema</span>
+      </div>
+      <div class="hero-stat">
+        <span class="stat-value">Fleksibilno</span>
+        <span class="stat-label">on-site i remote intervencije</span>
+      </div>
+    </div>
   </section>
 
   <!-- USLUGE -->
   <section id="usluge" class="services">
+    <div class="section-heading">
+      <p class="eyebrow">Usluge</p>
+      <h2>Pokrivamo ključne delove vaše IT infrastrukture</h2>
+    </div>
     <div class="service-card">
+      <img class="service-icon" src="assets/icons/support.svg" alt="">
       <h3>1st Line Support</h3>
       <p>Brza i efikasna podrška krajnjim korisnicima, kod vas na lokaciji ili udaljenim pristupom</p>
+      <a class="service-link" href="1st-line-support.html">Saznaj više</a>
     </div>
     <div class="service-card">
+      <img class="service-icon" src="assets/icons/admin.svg" alt="">
       <h3>Sistemska administracija</h3>
       <p>Održavanje i sigurnost vaših Windows i Linux sistema</p>
+      <a class="service-link" href="sistemska-administracija.html">Saznaj više</a>
     </div>
     <div class="service-card">
+      <img class="service-icon" src="assets/icons/network.svg" alt="">
       <h3>Mrežna infrastruktura</h3>
       <p>Projektovanje, konfiguracija i monitoring mrežnih sistema</p>
+      <a class="service-link" href="mrezna-infrastruktura.html">Saznaj više</a>
     </div>
     <div class="service-card">
+      <img class="service-icon" src="assets/icons/server.svg" alt="">
       <h3>Serveri i storage</h3>
       <p>Optimizacija i održavanje serverske i skladišne infrastrukture</p>
+      <a class="service-link" href="serveri-i-storage.html">Saznaj više</a>
     </div>
     <div class="service-card">
+      <img class="service-icon" src="assets/icons/cloud.svg" alt="">
       <h3>Cloud rešenja</h3>
       <p>Izbor cloud rešenja, održavanje, implementacija i podrška</p>
+      <a class="service-link" href="cloud-resenja.html">Saznaj više</a>
     </div>
     <div class="service-card">
+      <img class="service-icon" src="assets/icons/security.svg" alt="">
       <h3>Bezbednost</h3>
       <p>Izbor softvera, antivirus programa, zaštita podataka</p>
+      <a class="service-link" href="bezbednost.html">Saznaj više</a>
+    </div>
+  </section>
+
+  <section id="o-nama" class="about">
+    <div class="about-card">
+      <p class="eyebrow">O nama</p>
+      <h2>Praktična IT podrška, bez komplikovanja</h2>
+      <p>Radimo kao produžena ruka vašeg tima: stabilnost sistema, brz odziv, jasna komunikacija i rešenja prilagođena vašim potrebama.</p>
+    </div>
+    <div class="about-card about-card-accent">
+      <h3>Zašto IT ANT?</h3>
+      <ul>
+        <li>Brz odziv i direktna komunikacija</li>
+        <li>Fokus na stabilnost i sigurnost</li>
+        <li>Rešenja prilagođena realnim potrebama</li>
+      </ul>
     </div>
   </section>
 
   <!-- KONTAKT / FOOTER -->
   <footer id="kontakt">
-    <h2>Kontakt</h2>
-    <p>Email: <a href="mailto:office@it-ant.rs">office@it-ant.rs</a></p>
-    <p>Telefon: <a href="tel:+38162317740">+381 62 31 77 40</a></p>
-    <p>Tekući račun: 265-1100310099288-72</p>
-    <p>&copy; 2025 IT ANT – Sva prava zadržana</p>
+    <div class="footer-grid">
+      <div>
+        <p class="eyebrow">Kontakt</p>
+        <h2>Hajde da sredimo vašu IT infrastrukturu</h2>
+      </div>
+      <div class="contact-list">
+        <p>Email: <a href="mailto:office@it-ant.rs">office@it-ant.rs</a></p>
+        <p>Telefon: <a href="tel:+38162317740">+381 62 31 77 40</a></p>
+        <p>Tekući račun: 265-1100310099288-72</p>
+      </div>
+    </div>
+    <p class="copyright">&copy; 2025 IT ANT</p>
   </footer>
 
 </body>
