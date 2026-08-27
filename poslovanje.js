@@ -1,11 +1,10 @@
 const modal = document.querySelector('#modal');
 const form = document.querySelector('#entry-form');
 const modalTitle = document.querySelector('#modal-title');
-const descriptionField = document.querySelector('#description-field');
 const statusField = document.querySelector('#status-field');
 const clientPicker = document.querySelector('#client-picker');
 const clientSelect = document.querySelector('#client-select');
-const amountField = document.querySelector('#amount-field');
+const expenseFields = document.querySelector('#expense-fields');
 const invoiceItems = document.querySelector('#invoice-items');
 const itemList = document.querySelector('#item-list');
 const addItemButton = document.querySelector('#add-item');
@@ -22,10 +21,9 @@ const openModal = type => {
   entryType = type;
   modal.hidden = false;
   modalTitle.textContent = type === 'invoice' ? 'Novi račun' : type === 'client' ? 'Novi klijent' : 'Novi trošak';
-  descriptionField.hidden = type !== 'expense';
   statusField.hidden = type !== 'invoice';
   clientPicker.hidden = type !== 'invoice';
-  amountField.hidden = type === 'invoice';
+  expenseFields.hidden = type !== 'expense';
   invoiceItems.hidden = type !== 'invoice';
   clientSelect.required = type === 'invoice';
   form.amount.required = type !== 'invoice';
@@ -40,13 +38,13 @@ document.querySelectorAll('[data-modal]').forEach(button => button.addEventListe
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
 addItemButton.addEventListener('click', () => {
-  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="Npr. Pranje prozora" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>');
+  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>');
   itemList.lastElementChild.querySelector('.item-description').focus();
 });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-item') && itemList.children.length > 1) event.target.closest('.item-row').remove(); });
 
 function resetItems() {
-  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="Npr. Pranje prozora" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>';
+  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>';
 }
 
 form.addEventListener('submit', event => {
