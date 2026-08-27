@@ -3,7 +3,16 @@ const form = document.querySelector('#entry-form');
 const modalTitle = document.querySelector('#modal-title');
 const descriptionField = document.querySelector('#description-field');
 const statusField = document.querySelector('#status-field');
+const clientPicker = document.querySelector('#client-picker');
+const clientSelect = document.querySelector('#client-select');
+const newClientField = document.querySelector('#new-client-field');
 let entryType = 'invoice';
+
+const defaultClients = ['BCE Group', 'RNC Services', 'Crafter d.o.o.', 'Digital Finance'];
+const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || JSON.stringify(defaultClients));
+const populateClients = () => {
+  clientSelect.innerHTML = '<option value="" disabled selected>Izaberite komitenta</option>' + getClients().map(client => `<option value="${client}">${client}</option>`).join('');
+};
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS')} RSD`;
 const openModal = type => {
@@ -12,9 +21,14 @@ const openModal = type => {
   modalTitle.textContent = type === 'invoice' ? 'Novi račun' : type === 'client' ? 'Novi klijent' : 'Novi trošak';
   descriptionField.hidden = type !== 'expense';
   statusField.hidden = type !== 'invoice';
+  clientPicker.hidden = type !== 'invoice';
+  newClientField.hidden = type !== 'client';
+  clientSelect.required = type === 'invoice';
+  newClientField.querySelector('input').required = type === 'client';
   form.amount.required = type !== 'client';
   form.reset();
-  form.name.focus();
+  if (type === 'invoice') populateClients();
+  (type === 'client' ? newClientField.querySelector('input') : clientSelect).focus();
 };
 
 document.querySelectorAll('[data-modal]').forEach(button => button.addEventListener('click', () => openModal(button.dataset.modal)));
@@ -24,6 +38,14 @@ modal.addEventListener('click', event => { if (event.target === modal) modal.hid
 form.addEventListener('submit', event => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
+  if (entryType === 'client') {
+    const clients = getClients();
+    clients.unshift(data.newClientName);
+    localStorage.setItem('it-ant-clients', JSON.stringify([...new Set(clients)]));
+    data.name = data.newClientName;
+  } else {
+    data.name = data.client;
+  }
   const entries = JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
   entries.unshift({ ...data, type: entryType, createdAt: new Date().toISOString() });
   localStorage.setItem('it-ant-entries', JSON.stringify(entries));
