@@ -1,11 +1,5 @@
 const storageKey = 'it-ant-clients';
 const resetKey = 'it-ant-demo-reset-v2';
-if (!localStorage.getItem(resetKey)) {
-  localStorage.removeItem(storageKey);
-  localStorage.removeItem('it-ant-entries');
-  localStorage.setItem(resetKey, 'true');
-}
-
 const modal = document.querySelector('#modal');
 const form = document.querySelector('#komitent-form');
 const list = document.querySelector('#komitent-list');

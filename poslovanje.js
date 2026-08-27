@@ -11,12 +11,6 @@ const itemList = document.querySelector('#item-list');
 const addItemButton = document.querySelector('#add-item');
 let entryType = 'invoice';
 
-if (!localStorage.getItem('it-ant-demo-reset-v2')) {
-  localStorage.removeItem('it-ant-clients');
-  localStorage.removeItem('it-ant-entries');
-  localStorage.setItem('it-ant-demo-reset-v2', 'true');
-}
-
 const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || '[]');
 const getEntries = () => JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
 const populateClients = () => {
@@ -46,13 +40,13 @@ document.querySelectorAll('[data-modal]').forEach(button => button.addEventListe
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
 addItemButton.addEventListener('click', () => {
-  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="Opis usluge" required><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="Cena" aria-label="Cena" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button></div>');
+  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="Npr. Pranje prozora" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>');
   itemList.lastElementChild.querySelector('.item-description').focus();
 });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-item') && itemList.children.length > 1) event.target.closest('.item-row').remove(); });
 
 function resetItems() {
-  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="Opis usluge" required><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="Cena" aria-label="Cena" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button></div>';
+  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="Npr. Pranje prozora" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>';
 }
 
 form.addEventListener('submit', event => {
