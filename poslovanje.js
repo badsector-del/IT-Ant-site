@@ -11,7 +11,25 @@ const addItemButton = document.querySelector('#add-item');
 let entryType = 'invoice';
 
 const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || '[]');
-const getEntries = () => JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
+const makeId = () => window.crypto?.randomUUID?.() || `entry-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const invoiceYear = entry => new Date(entry.createdAt || Date.now()).getFullYear();
+function getEntries() {
+  const entries = JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
+  let changed = false;
+  const counters = {};
+  entries.filter(entry => entry.type === 'invoice').sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).forEach(entry => {
+    const year = invoiceYear(entry);
+    const existingNumber = entry.number?.match(/^R-(\d+)-(\d{2})$/);
+    if (existingNumber) counters[year] = Math.max(counters[year] || 0, Number(existingNumber[1]));
+  });
+  entries.forEach(entry => {
+    if (!entry.id) { entry.id = makeId(); changed = true; }
+    if (entry.type === 'invoice' && !entry.number) { const year = invoiceYear(entry); entry.number = `R-${String((counters[year] || 0) + 1).padStart(3, '0')}-${String(year).slice(-2)}`; counters[year] = (counters[year] || 0) + 1; changed = true; }
+  });
+  if (changed) localStorage.setItem('it-ant-entries', JSON.stringify(entries));
+  return entries;
+}
+const nextInvoiceNumber = (entries, date) => { const year = date.getFullYear(); const max = entries.filter(entry => entry.type === 'invoice' && invoiceYear(entry) === year).reduce((highest, entry) => Math.max(highest, Number(entry.number?.match(/^R-(\d+)-/)?.[1] || 0)), 0); return `R-${String(max + 1).padStart(3, '0')}-${String(year).slice(-2)}`; };
 const populateClients = () => {
   clientSelect.innerHTML = '<option value="" disabled selected>Izaberite komitenta</option>' + getClients().map(client => `<option value="${client.name}">${client.name}</option>`).join('');
 };
@@ -57,7 +75,8 @@ form.addEventListener('submit', event => {
     data.amount = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   }
   const entries = JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
-  entries.unshift({ ...data, type: entryType, createdAt: new Date().toISOString() });
+  const createdAt = new Date().toISOString();
+  entries.unshift({ ...data, type: entryType, createdAt, id: makeId(), ...(entryType === 'invoice' ? { number: nextInvoiceNumber(entries, new Date(createdAt)) } : {}) });
   localStorage.setItem('it-ant-entries', JSON.stringify(entries));
   renderDashboard();
   modal.hidden = true;
@@ -93,7 +112,7 @@ function renderDashboard() {
   document.querySelector('#income-note').textContent = paid.length ? `${paid.length} plaćenih računa` : 'Nema unetih računa';
   document.querySelector('#pending-count').textContent = pending.length ? `${pending.length} računa na čekanju` : 'Nema računa na čekanju';
   document.querySelector('#expenses-note').textContent = expenses.length ? `${expenses.length} evidentiranih troškova` : 'Nema unetih troškova';
-  document.querySelector('#invoice-list').innerHTML = invoices.length ? invoices.slice(0, 5).map((invoice, index) => `<tr><td><strong>#NOVI-${invoices.length - index}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">Još nema unetih računa.</td></tr>';
+  document.querySelector('#invoice-list').innerHTML = invoices.length ? invoices.slice(0, 5).map(invoice => `<tr><td><strong>${invoice.number}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">Još nema unetih računa.</td></tr>';
   const clients = getClients();
   document.querySelector('#client-list').innerHTML = clients.length ? clients.slice(0, 6).map(client => { const clientInvoices = invoices.filter(invoice => invoice.name === client.name); return `<div class="client"><span class="client-avatar orange">${client.name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()}</span><div><strong>${client.name}</strong><small>${clientInvoices.length} ${clientInvoices.length === 1 ? 'račun' : 'računa'}</small></div><b>${formatRsd(total(clientInvoices.filter(invoice => invoice.status === 'pending')))}</b></div>`; }).join('') : '<p class="empty-state">Još nema unetih komitenata.</p>';
 }
