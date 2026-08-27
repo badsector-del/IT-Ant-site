@@ -16,6 +16,6 @@ signupButton.addEventListener('click', async () => {
   const values = Object.fromEntries(new FormData(form));
   if (!values.email || !values.password) { message.textContent = 'Unesite email i lozinku za kreiranje naloga.'; return; }
   message.textContent = 'Kreiranje naloga...';
-  const { error } = await window.itAntSupabase.auth.signUp({ email: values.email, password: values.password });
+  const { error } = await window.itAntSupabase.auth.signUp({ email: values.email, password: values.password, options: { emailRedirectTo: `${window.location.origin}/login.html` } });
   message.textContent = error ? error.message : 'Nalog je kreiran. Proverite email ako je potvrda uključena.';
 });
