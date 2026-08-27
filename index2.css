@@ -426,13 +426,22 @@ footer a:hover {
   }
 
   .nav-dropdown-menu {
-    position: static;
-    min-width: 0;
-    width: 100%;
-    margin-top: 0.5rem;
+    position: absolute;
+    top: calc(100% - 0.1rem);
+    left: 0;
+    min-width: 230px;
+    width: max-content;
+    margin-top: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-0.35rem);
+  }
+
+  .nav-dropdown:hover .nav-dropdown-menu,
+  .nav-dropdown:focus-within .nav-dropdown-menu {
     opacity: 1;
     pointer-events: auto;
-    transform: none;
+    transform: translateY(0);
   }
 
   .hero,
