@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Komitenti | IT ANT Poslovanje</title>
+  <link rel="stylesheet" href="poslovanje.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="index.html"><img src="Logo-Transparent.png" alt="IT ANT"><span>Poslovanje</span></a>
+      <nav class="side-nav" aria-label="Glavna navigacija aplikacije">
+        <a href="poslovanje.html"><span>⌂</span> Pregled</a>
+        <a class="active" href="komitenti.html"><span>◉</span> Komitenti</a>
+        <a href="poslovanje.html#racuni"><span>▣</span> Računi</a>
+        <a href="poslovanje.html#troskovi"><span>↗</span> Troškovi</a>
+        <a href="poslovanje.html#rokovi"><span>◷</span> Rokovi</a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot"></span> Sve je ažurno</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="app-header"><div><p class="overline">Baza podataka</p><h1>Komitenti</h1></div><button class="primary-action" id="new-client-button">+ Novi komitent</button></header>
+      <section class="panel module-intro"><p>Ovde čuvate podatke svojih komitenata. Kada ih jednom unesete, biraćete ih iz liste prilikom kreiranja računa.</p><span>Podaci se čuvaju lokalno u ovoj probnoj verziji.</span></section>
+      <section class="panel clients-module"><div class="panel-heading"><div><p class="overline">Evidencija</p><h2>Svi komitenti</h2></div><span class="record-count" id="record-count">0 komitenata</span></div><div class="table-wrap"><table><thead><tr><th>Naziv</th><th>PIB</th><th>MB</th><th>Adresa</th><th>Email za slanje faktura</th></tr></thead><tbody id="komitent-list"><tr><td colspan="5" class="empty-state">Još nema unetih komitenata.</td></tr></tbody></table></div></section>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modal" hidden><form class="modal" id="komitent-form"><button class="modal-close" type="button" aria-label="Zatvori">×</button><p class="overline">Novi unos</p><h2>Novi komitent</h2><label>Naziv komitenta<input name="name" required placeholder="Naziv komitenta"></label><label>PIB<input name="pib" inputmode="numeric" placeholder="PIB"></label><label>MB<input name="mb" inputmode="numeric" placeholder="Matični broj"></label><label>Adresa<input name="address" placeholder="Adresa komitenta"></label><label>Email za slanje faktura<input name="email" type="email" placeholder="email@firma.rs"></label><button class="primary-action modal-submit" type="submit">Sačuvaj komitenta</button></form></div>
+  <script src="komitenti.js"></script>
+</body>
+</html>

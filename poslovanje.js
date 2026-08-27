@@ -5,13 +5,17 @@ const descriptionField = document.querySelector('#description-field');
 const statusField = document.querySelector('#status-field');
 const clientPicker = document.querySelector('#client-picker');
 const clientSelect = document.querySelector('#client-select');
-const newClientField = document.querySelector('#new-client-field');
 let entryType = 'invoice';
 
-const defaultClients = ['BCE Group', 'RNC Services', 'Crafter d.o.o.', 'Digital Finance'];
-const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || JSON.stringify(defaultClients));
+if (!localStorage.getItem('it-ant-demo-reset-v2')) {
+  localStorage.removeItem('it-ant-clients');
+  localStorage.removeItem('it-ant-entries');
+  localStorage.setItem('it-ant-demo-reset-v2', 'true');
+}
+
+const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || '[]');
 const populateClients = () => {
-  clientSelect.innerHTML = '<option value="" disabled selected>Izaberite komitenta</option>' + getClients().map(client => `<option value="${client}">${client}</option>`).join('');
+  clientSelect.innerHTML = '<option value="" disabled selected>Izaberite komitenta</option>' + getClients().map(client => `<option value="${client.name}">${client.name}</option>`).join('');
 };
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS')} RSD`;
@@ -22,13 +26,11 @@ const openModal = type => {
   descriptionField.hidden = type !== 'expense';
   statusField.hidden = type !== 'invoice';
   clientPicker.hidden = type !== 'invoice';
-  newClientField.hidden = type !== 'client';
   clientSelect.required = type === 'invoice';
-  newClientField.querySelector('input').required = type === 'client';
-  form.amount.required = type !== 'client';
+  form.amount.required = true;
   form.reset();
   if (type === 'invoice') populateClients();
-  (type === 'client' ? newClientField.querySelector('input') : clientSelect).focus();
+  (type === 'invoice' ? clientSelect : form.amount).focus();
 };
 
 document.querySelectorAll('[data-modal]').forEach(button => button.addEventListener('click', () => openModal(button.dataset.modal)));
@@ -38,12 +40,7 @@ modal.addEventListener('click', event => { if (event.target === modal) modal.hid
 form.addEventListener('submit', event => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
-  if (entryType === 'client') {
-    const clients = getClients();
-    clients.unshift(data.newClientName);
-    localStorage.setItem('it-ant-clients', JSON.stringify([...new Set(clients)]));
-    data.name = data.newClientName;
-  } else {
+  if (entryType === 'invoice') {
     data.name = data.client;
   }
   const entries = JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
