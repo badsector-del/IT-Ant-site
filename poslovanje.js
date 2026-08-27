@@ -80,7 +80,7 @@ form.addEventListener('submit', event => {
   localStorage.setItem('it-ant-entries', JSON.stringify(entries));
   renderDashboard();
   modal.hidden = true;
-  if (new URLSearchParams(window.location.search).get('return') === 'racuni') window.location.href = 'racuni.html';
+  if (entryType === 'invoice') window.location.href = 'racuni.html';
 });
 
 function renderEntry(data) {
