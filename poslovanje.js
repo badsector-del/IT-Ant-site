@@ -16,7 +16,8 @@ const populateClients = () => {
   clientSelect.innerHTML = '<option value="" disabled selected>Izaberite komitenta</option>' + getClients().map(client => `<option value="${client.name}">${client.name}</option>`).join('');
 };
 
-const formatRsd = value => `${Number(value).toLocaleString('sr-RS')} RSD`;
+const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
+const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
 const openModal = type => {
   entryType = type;
   modal.hidden = false;
@@ -74,7 +75,7 @@ function renderEntry(data) {
     current.textContent = formatRsd(amount);
     return;
   }
-  const date = new Intl.DateTimeFormat('sr-RS', { day: '2-digit', month: 'short' }).format(new Date());
+  const date = formatDate(new Date());
   const status = data.status === 'paid' ? '<span class="badge paid">Plaćen</span>' : '<span class="badge pending">Čeka uplatu</span>';
   document.querySelector('#invoice-list').insertAdjacentHTML('afterbegin', `<tr class="new-entry"><td><strong>#NOVI</strong></td><td>${data.name}</td><td>${date}</td><td>${formatRsd(data.amount)}</td><td>${status}</td></tr>`);
 }
@@ -92,7 +93,7 @@ function renderDashboard() {
   document.querySelector('#income-note').textContent = paid.length ? `${paid.length} plaćenih računa` : 'Nema unetih računa';
   document.querySelector('#pending-count').textContent = pending.length ? `${pending.length} računa na čekanju` : 'Nema računa na čekanju';
   document.querySelector('#expenses-note').textContent = expenses.length ? `${expenses.length} evidentiranih troškova` : 'Nema unetih troškova';
-  document.querySelector('#invoice-list').innerHTML = invoices.length ? invoices.slice(0, 5).map((invoice, index) => `<tr><td><strong>#NOVI-${invoices.length - index}</strong></td><td>${invoice.name}</td><td>${new Intl.DateTimeFormat('sr-RS', { day: '2-digit', month: 'short' }).format(new Date(invoice.createdAt))}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">Još nema unetih računa.</td></tr>';
+  document.querySelector('#invoice-list').innerHTML = invoices.length ? invoices.slice(0, 5).map((invoice, index) => `<tr><td><strong>#NOVI-${invoices.length - index}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">Još nema unetih računa.</td></tr>';
   const clients = getClients();
   document.querySelector('#client-list').innerHTML = clients.length ? clients.slice(0, 6).map(client => { const clientInvoices = invoices.filter(invoice => invoice.name === client.name); return `<div class="client"><span class="client-avatar orange">${client.name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()}</span><div><strong>${client.name}</strong><small>${clientInvoices.length} ${clientInvoices.length === 1 ? 'račun' : 'računa'}</small></div><b>${formatRsd(total(clientInvoices.filter(invoice => invoice.status === 'pending')))}</b></div>`; }).join('') : '<p class="empty-state">Još nema unetih komitenata.</p>';
 }
