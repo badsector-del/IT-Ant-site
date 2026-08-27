@@ -5,6 +5,10 @@ const descriptionField = document.querySelector('#description-field');
 const statusField = document.querySelector('#status-field');
 const clientPicker = document.querySelector('#client-picker');
 const clientSelect = document.querySelector('#client-select');
+const amountField = document.querySelector('#amount-field');
+const invoiceItems = document.querySelector('#invoice-items');
+const itemList = document.querySelector('#item-list');
+const addItemButton = document.querySelector('#add-item');
 let entryType = 'invoice';
 
 if (!localStorage.getItem('it-ant-demo-reset-v2')) {
@@ -27,9 +31,13 @@ const openModal = type => {
   descriptionField.hidden = type !== 'expense';
   statusField.hidden = type !== 'invoice';
   clientPicker.hidden = type !== 'invoice';
+  amountField.hidden = type === 'invoice';
+  invoiceItems.hidden = type !== 'invoice';
   clientSelect.required = type === 'invoice';
-  form.amount.required = true;
+  form.amount.required = type !== 'invoice';
   form.reset();
+  resetItems();
+  itemList.querySelectorAll('input').forEach(input => { input.required = type === 'invoice'; });
   if (type === 'invoice') populateClients();
   (type === 'invoice' ? clientSelect : form.amount).focus();
 };
@@ -37,12 +45,23 @@ const openModal = type => {
 document.querySelectorAll('[data-modal]').forEach(button => button.addEventListener('click', () => openModal(button.dataset.modal)));
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
+addItemButton.addEventListener('click', () => {
+  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="Opis usluge" required><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="Cena" aria-label="Cena" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button></div>');
+  itemList.lastElementChild.querySelector('.item-description').focus();
+});
+itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-item') && itemList.children.length > 1) event.target.closest('.item-row').remove(); });
+
+function resetItems() {
+  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="Opis usluge" required><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="Cena" aria-label="Cena" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button></div>';
+}
 
 form.addEventListener('submit', event => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
   if (entryType === 'invoice') {
     data.name = data.client;
+    data.items = [...itemList.querySelectorAll('.item-row')].map(row => ({ description: row.querySelector('.item-description').value.trim(), quantity: Number(row.querySelector('.item-quantity').value), price: Number(row.querySelector('.item-price').value) }));
+    data.amount = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   }
   const entries = JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
   entries.unshift({ ...data, type: entryType, createdAt: new Date().toISOString() });
