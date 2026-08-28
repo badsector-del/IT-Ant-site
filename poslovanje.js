@@ -121,9 +121,10 @@ function renderEntry(data) {
   document.querySelector('#invoice-list').insertAdjacentHTML('afterbegin', `<tr class="new-entry"><td><strong>#NOVI</strong></td><td>${data.name}</td><td>${date}</td><td>${formatRsd(data.amount)}</td><td>${status}</td></tr>`);
 }
 
-function renderDashboard() {
+async function renderDashboard() {
   const entries = getEntries();
-  const invoices = entries.filter(entry => entry.type === 'invoice');
+  const { data: remoteInvoices } = await db.from('invoices').select('id,number,status,total,issue_date,clients(name)').order('issue_date', { ascending: false });
+  const invoices = remoteInvoices ? remoteInvoices.map(invoice => ({ ...invoice, type: 'invoice', name: invoice.clients?.name || 'Nepoznat komitent', amount: invoice.total, createdAt: invoice.issue_date })) : entries.filter(entry => entry.type === 'invoice');
   const expenses = entries.filter(entry => entry.type === 'expense');
   const paid = invoices.filter(entry => entry.status === 'paid');
   const pending = invoices.filter(entry => entry.status === 'pending');
@@ -135,7 +136,8 @@ function renderDashboard() {
   document.querySelector('#pending-count').textContent = pending.length ? `${pending.length} računa na čekanju` : 'Nema računa na čekanju';
   document.querySelector('#expenses-note').textContent = expenses.length ? `${expenses.length} evidentiranih troškova` : 'Nema unetih troškova';
   document.querySelector('#invoice-list').innerHTML = invoices.length ? invoices.slice(0, 5).map(invoice => `<tr><td><strong>${invoice.number}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">Još nema unetih računa.</td></tr>';
-  const clients = getClients();
+  const { data: remoteClients } = await db.from('clients').select('id,name').order('name', { ascending: true });
+  const clients = remoteClients || getClients();
   document.querySelector('#client-list').innerHTML = clients.length ? clients.slice(0, 6).map(client => { const clientInvoices = invoices.filter(invoice => invoice.name === client.name); return `<div class="client"><span class="client-avatar orange">${client.name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()}</span><div><strong>${client.name}</strong><small>${clientInvoices.length} ${clientInvoices.length === 1 ? 'račun' : 'računa'}</small></div><b>${formatRsd(total(clientInvoices.filter(invoice => invoice.status === 'pending')))}</b></div>`; }).join('') : '<p class="empty-state">Još nema unetih komitenata.</p>';
 }
 
