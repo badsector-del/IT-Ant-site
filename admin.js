@@ -9,6 +9,7 @@ const companyFormTitle = document.querySelector('#company-form-title');
 const companySubmit = document.querySelector('#company-submit');
 const companyCancel = document.querySelector('#company-cancel');
 let editingCompanyId = null;
+const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
 
 async function callAdmin(action, payload = {}) {
   const { data, error } = await db.functions.invoke('ADMIN-api', { body: { action, ...payload } });
@@ -54,7 +55,7 @@ function renderUsers(data) {
 
 function renderLogs(logs = []) {
   const logList = document.querySelector('#admin-log-list');
-  logList.innerHTML = logs.length ? logs.map(log => `<tr><td>${new Date(log.created_at).toLocaleString('sr-RS')}</td><td>${log.admin_email || 'Administrator'}</td><td>${log.action === 'create_company' ? 'Kreirano preduzeće' : 'Kreiran korisnički nalog'}</td><td>${log.details?.name || log.details?.email || '—'}</td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema administratorskih radnji.</td></tr>';
+  logList.innerHTML = logs.length ? logs.map(log => `<tr><td>${formatDate(log.created_at)}</td><td>${log.admin_email || 'Administrator'}</td><td>${log.action === 'create_company' ? 'Kreirano preduzeće' : log.action === 'update_company' ? 'Izmenjeno preduzeće' : log.action === 'delete_company' ? 'Obrisano preduzeće' : log.action === 'reset_password' ? 'Resetovana lozinka' : log.action === 'move_user' ? 'Promenjeno preduzeće korisnika' : log.action === 'delete_user' ? 'Obrisan korisnički nalog' : 'Kreiran korisnički nalog'}</td><td>${log.details?.name || log.details?.email || '—'}</td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema administratorskih radnji.</td></tr>';
 }
 
 async function load() { try { const data = await callAdmin('list'); window.adminData = data; render(data); renderUsers(data); renderLogs(data.logs); } catch (error) { list.innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; setMessage('Nemate administratorski pristup ili funkcija nije objavljena.', true); } }
