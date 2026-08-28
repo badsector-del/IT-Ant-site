@@ -43,5 +43,19 @@ async function load() {
     sheet.append(footer);
     page.append(sheet);
   }
-  }
+}
+const preparePrint = () => {
+  document.querySelector('.toolbar')?.setAttribute('data-print-hidden', 'true');
+  document.querySelectorAll('.page-sheet').forEach((sheet, index) => {
+    sheet.style.breakAfter = index === document.querySelectorAll('.page-sheet').length - 1 ? 'auto' : 'page';
+    sheet.style.pageBreakAfter = index === document.querySelectorAll('.page-sheet').length - 1 ? 'auto' : 'always';
+    if (index > 0) {
+      sheet.style.breakBefore = 'page';
+      sheet.style.pageBreakBefore = 'always';
+    }
+  });
+};
+const restorePrint = () => document.querySelector('.toolbar')?.removeAttribute('data-print-hidden');
+window.addEventListener('beforeprint', preparePrint);
+window.addEventListener('afterprint', restorePrint);
 load();
