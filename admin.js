@@ -7,7 +7,7 @@ const count = document.querySelector('#admin-count');
 const message = document.querySelector('#admin-message');
 
 async function callAdmin(action, payload = {}) {
-  const { data, error } = await db.functions.invoke('admin-api', { body: { action, ...payload } });
+  const { data, error } = await db.functions.invoke('ADMIN-api', { body: { action, ...payload } });
   if (error) throw new Error(error.message);
   if (data?.error) throw new Error(data.error);
   return data;
