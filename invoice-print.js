@@ -17,5 +17,31 @@ async function load() {
   const payment = `Uplatu izvršiti na račun ${esc(company.bank_name || '—')}, broj računa ${esc(company.bank_account || '—')} sa pozivom na broj fakture ${esc(invoice.number)}`;
   document.querySelector('.footer').innerHTML = `<div>Račun broj ${esc(invoice.number)} · ${esc(company.name || 'Preduzeće')} · strana <span class="page-counter">1/1</span></div>${company.tax_regime === 'books_vat' ? '' : '<div>Ne podleže obračunu i plaćanju poreza po Zakonu o PDV-u</div>'}<div>${payment}</div><div>Dokument je važeći bez potpisa</div>`;
     document.querySelector('.invoice-head .issuer').insertAdjacentHTML('beforeend', `<p>Adresa: ${esc(company.address || '—')}</p><p>Tekući račun: ${esc(company.bank_account || '—')}</p>`);
+  const originalSheet = document.querySelector('.sheet');
+  const originalHeader = originalSheet.querySelector('.invoice-head');
+  const originalParties = originalSheet.querySelector('.parties');
+  const originalTable = originalSheet.querySelector('.items');
+  const originalTotals = originalSheet.querySelector('.totals');
+  const originalNotes = originalSheet.querySelector('.notes');
+  const originalFooter = originalSheet.querySelector('.footer');
+  const rows = [...originalTable.querySelectorAll('tbody tr')];
+  const rowsPerPage = 16;
+  const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage));
+  const footerHtml = pageNumber => `<div>Račun broj ${esc(invoice.number)} · ${esc(company.name || 'Preduzeće')} · strana ${pageNumber}/${pageCount}</div>${company.tax_regime === 'books_vat' ? '' : '<div>Ne podleže obračunu i plaćanju poreza po Zakonu o PDV-u</div>'}<div>${payment}</div><div>Dokument je važeći bez potpisa</div>`;
+  originalSheet.remove();
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    const sheet = document.createElement('section');
+    sheet.className = 'sheet page-sheet';
+    if (pageNumber === 1) sheet.append(originalHeader.cloneNode(true), originalParties.cloneNode(true));
+    else { const continuation = document.createElement('p'); continuation.className = 'continuation-title'; continuation.textContent = `Račun broj ${invoice.number} · nastavak`; sheet.append(continuation); }
+    const table = originalTable.cloneNode(true);
+    table.querySelector('tbody').replaceChildren(...rows.slice((pageNumber - 1) * rowsPerPage, pageNumber * rowsPerPage).map(row => row.cloneNode(true)));
+    sheet.append(table);
+    if (pageNumber === pageCount) { sheet.append(originalTotals.cloneNode(true)); if (originalNotes) sheet.append(originalNotes.cloneNode(true)); }
+    const footer = originalFooter.cloneNode(false);
+    footer.innerHTML = footerHtml(pageNumber);
+    sheet.append(footer);
+    page.append(sheet);
+  }
   }
 load();
