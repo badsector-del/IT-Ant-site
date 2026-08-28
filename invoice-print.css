@@ -13,6 +13,7 @@ table { width:100%; border-collapse:collapse; }.items th { padding:9px 7px; back
 .footer { font-family:Georgia,serif; line-height:1.55; text-align:center; }
 .footer div:first-child { font-size:11px; }
 .page-counter::before { content:counter(page) " / " counter(pages); }
+.page-counter::before { content:none; }
 .sheet { min-height:267mm; display:flex; flex-direction:column; }
 .footer { margin-top:auto; }
 .sheet { position:relative; padding-bottom:38mm; }
