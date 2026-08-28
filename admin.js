@@ -5,6 +5,10 @@ const companySelect = document.querySelector('#company-select');
 const list = document.querySelector('#admin-list');
 const count = document.querySelector('#admin-count');
 const message = document.querySelector('#admin-message');
+const companyFormTitle = document.querySelector('#company-form-title');
+const companySubmit = document.querySelector('#company-submit');
+const companyCancel = document.querySelector('#company-cancel');
+let editingCompanyId = null;
 
 async function callAdmin(action, payload = {}) {
   const { data, error } = await db.functions.invoke('ADMIN-api', { body: { action, ...payload } });
@@ -22,9 +26,23 @@ function render(data) {
   list.innerHTML = companies.length ? companies.map(company => {
     const members = data.memberships.filter(member => member.company_id === company.id);
     const regime = company.tax_regime === 'books_vat' ? 'Knjige + PDV' : company.tax_regime === 'books_non_vat' ? 'Knjige, bez PDV' : 'Paušalac';
-    return `<tr><td><strong>${company.name}</strong></td><td>${company.pib || '—'}</td><td>${regime}</td><td>${members.length ? members.map(member => member.email).join('<br>') : 'Nema naloga'}</td><td>${members.length ? members.map(member => member.role).join('<br>') : '—'}</td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="empty-state">Još nema preduzeća.</td></tr>';
+    return `<tr><td><strong>${company.name}</strong></td><td>${company.pib || '—'}</td><td>${regime}</td><td>${members.length ? members.map(member => member.email).join('<br>') : 'Nema naloga'}</td><td>${members.length ? members.map(member => member.role).join('<br>') : '—'}</td><td><button class="table-action edit-company" data-company-id="${company.id}" type="button">Izmeni</button><button class="table-action danger delete-company" data-company-id="${company.id}" type="button">Obriši</button></td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="empty-state">Još nema preduzeća.</td></tr>';
 }
+
+function resetCompanyForm() { editingCompanyId = null; companyForm.reset(); companyFormTitle.textContent = 'Dodaj preduzeće'; companySubmit.textContent = 'Sačuvaj preduzeće'; companyCancel.hidden = true; }
+
+list.addEventListener('click', async event => {
+  const button = event.target.closest('button'); if (!button) return;
+  const company = (window.adminData?.companies || []).find(item => item.id === button.dataset.companyId); if (!company) return;
+  if (button.classList.contains('edit-company')) {
+    editingCompanyId = company.id; companyFormTitle.textContent = 'Izmeni preduzeće'; companySubmit.textContent = 'Sačuvaj izmene'; companyCancel.hidden = false;
+    companyForm.name.value = company.name; companyForm.pib.value = company.pib || ''; companyForm.tax_regime.value = company.tax_regime || 'pausal'; companyForm.vat_number.value = company.vat_number || ''; companyForm.regime_effective_from.value = company.regime_effective_from || '';
+    companyForm.name.focus();
+  } else if (confirm(`Obrisati preduzeće "${company.name}"?`)) {
+    try { await callAdmin('delete-company', { company_id: company.id }); setMessage('Preduzeće je obrisano.'); await load(); } catch (error) { setMessage(error.message, true); }
+  }
+});
 
 function renderUsers(data) {
   const userList = document.querySelector('#admin-user-list');
@@ -39,7 +57,7 @@ function renderLogs(logs = []) {
   logList.innerHTML = logs.length ? logs.map(log => `<tr><td>${new Date(log.created_at).toLocaleString('sr-RS')}</td><td>${log.admin_email || 'Administrator'}</td><td>${log.action === 'create_company' ? 'Kreirano preduzeće' : 'Kreiran korisnički nalog'}</td><td>${log.details?.name || log.details?.email || '—'}</td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema administratorskih radnji.</td></tr>';
 }
 
-async function load() { try { const data = await callAdmin('list'); render(data); renderUsers(data); renderLogs(data.logs); } catch (error) { list.innerHTML = `<tr><td colspan="5" class="empty-state">${error.message}</td></tr>`; setMessage('Nemate administratorski pristup ili funkcija nije objavljena.', true); } }
+async function load() { try { const data = await callAdmin('list'); window.adminData = data; render(data); renderUsers(data); renderLogs(data.logs); } catch (error) { list.innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; setMessage('Nemate administratorski pristup ili funkcija nije objavljena.', true); } }
 
 document.querySelector('#admin-user-list').addEventListener('click', async event => {
   const button = event.target.closest('button'); if (!button) return;
@@ -61,8 +79,10 @@ document.querySelector('#admin-user-list').addEventListener('click', async event
 
 companyForm.addEventListener('submit', async event => {
   event.preventDefault(); const values = Object.fromEntries(new FormData(companyForm));
-  try { await callAdmin('create-company', { name: values.name, pib: values.pib, tax_regime: values.tax_regime, vat_number: values.vat_number, regime_effective_from: values.regime_effective_from }); companyForm.reset(); setMessage('Preduzeće je sačuvano.'); await load(); } catch (error) { setMessage(error.message, true); }
+  try { const wasEditing = Boolean(editingCompanyId); await callAdmin(wasEditing ? 'update-company' : 'create-company', { company_id: editingCompanyId, name: values.name, pib: values.pib, tax_regime: values.tax_regime, vat_number: values.vat_number, regime_effective_from: values.regime_effective_from }); resetCompanyForm(); setMessage(wasEditing ? 'Izmene su sačuvane.' : 'Preduzeće je sačuvano.'); await load(); } catch (error) { setMessage(error.message, true); }
 });
+
+companyCancel.addEventListener('click', resetCompanyForm);
 
 userForm.addEventListener('submit', async event => {
   event.preventDefault(); const values = Object.fromEntries(new FormData(userForm));

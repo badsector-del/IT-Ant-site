@@ -32,6 +32,29 @@ Deno.serve(async request => {
       await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'create_company', target_type: 'company', target_id: data.id, details: { name: body.name.trim(), pib: body.pib?.trim() || null, tax_regime: body.tax_regime || 'pausal' } });
       return json({ company: data });
     }
+    if (body.action === 'update-company') {
+      if (!body.company_id || !body.name?.trim()) return json({ error: 'Naziv preduzeća je obavezan.' }, 400);
+      const { data, error } = await admin.from('companies').update({ name: body.name.trim(), pib: body.pib?.trim() || null, tax_regime: body.tax_regime || 'pausal', vat_number: body.vat_number?.trim() || null, regime_effective_from: body.regime_effective_from || new Date().toISOString().slice(0, 10) }).eq('id', body.company_id).select('id').single();
+      if (error) throw error;
+      await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'update_company', target_type: 'company', target_id: data.id, details: { name: body.name.trim(), tax_regime: body.tax_regime || 'pausal' } });
+      return json({ company: data });
+    }
+    if (body.action === 'delete-company') {
+      if (!body.company_id) return json({ error: 'Preduzeće nije izabrano.' }, 400);
+      const checks = await Promise.all([
+        admin.from('company_users').select('user_id', { count: 'exact', head: true }).eq('company_id', body.company_id),
+        admin.from('clients').select('id', { count: 'exact', head: true }).eq('company_id', body.company_id),
+        admin.from('invoices').select('id', { count: 'exact', head: true }).eq('company_id', body.company_id),
+        admin.from('expenses').select('id', { count: 'exact', head: true }).eq('company_id', body.company_id)
+      ]);
+      if (checks.some(check => check.error)) throw new Error('Nije moguće proveriti podatke preduzeća.');
+      if (checks.some(check => (check.count || 0) > 0)) return json({ error: 'Preduzeće ne može biti obrisano dok ima korisnike ili podatke.' }, 409);
+      const { data: target } = await admin.from('companies').select('name').eq('id', body.company_id).single();
+      const { error } = await admin.from('companies').delete().eq('id', body.company_id);
+      if (error) throw error;
+      await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'delete_company', target_type: 'company', target_id: body.company_id, details: { name: target?.name || null } });
+      return json({ company_id: body.company_id });
+    }
     if (body.action === 'create-user') {
       if (!body.email || !body.password || !body.company_id) return json({ error: 'Popunite sva polja.' }, 400);
       const { data: created, error: userError } = await admin.auth.admin.createUser({ email: body.email.trim(), password: body.password, email_confirm: true });
