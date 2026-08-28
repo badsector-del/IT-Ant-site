@@ -90,6 +90,9 @@ document.querySelector('.modal-close').addEventListener('click', closeModal);
 modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
 addItemButton.addEventListener('click', () => {
   itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20">20% - Opšta</option><option value="10">10% - Posebna</option><option value="exempt_right">Oslobođeno sa pravom</option><option value="exempt_no">Oslobođeno bez prava</option></select></div>');
+  const newVatSelect = itemList.lastElementChild.querySelector('.item-vat');
+  newVatSelect.hidden = companySettings?.tax_regime !== 'books_vat';
+  newVatSelect.disabled = newVatSelect.hidden;
   itemList.lastElementChild.querySelector('.item-description').focus();
 });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-item') && itemList.children.length > 1) event.target.closest('.item-row').remove(); });
