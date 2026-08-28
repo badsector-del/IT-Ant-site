@@ -8,6 +8,7 @@ const expenseFields = document.querySelector('#expense-fields');
 const invoiceItems = document.querySelector('#invoice-items');
 const itemList = document.querySelector('#item-list');
 const addItemButton = document.querySelector('#add-item');
+const db = window.itAntSupabase;
 let entryType = 'invoice';
 
 const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || '[]');
@@ -30,9 +31,16 @@ function getEntries() {
   return entries;
 }
 const nextInvoiceNumber = (entries, date) => { const year = date.getFullYear(); const max = entries.filter(entry => entry.type === 'invoice' && invoiceYear(entry) === year).reduce((highest, entry) => Math.max(highest, Number(entry.number?.match(/^R-(\d+)-/)?.[1] || 0)), 0); return `R-${String(max + 1).padStart(3, '0')}-${String(year).slice(-2)}`; };
-const populateClients = () => {
-  clientSelect.innerHTML = '<option value="" disabled selected>Izaberite komitenta</option>' + getClients().map(client => `<option value="${client.name}">${client.name}</option>`).join('');
-};
+async function populateClients() {
+  clientSelect.innerHTML = '<option value="" disabled selected>Učitavanje komitenata...</option>';
+  await db.auth.getSession();
+  const { data, error } = await db.from('clients').select('name').order('name', { ascending: true });
+  if (error) {
+    clientSelect.innerHTML = '<option value="" disabled selected>Komitenti nisu dostupni</option>';
+    return;
+  }
+  clientSelect.innerHTML = data.length ? '<option value="" disabled selected>Izaberite komitenta</option>' + data.map(client => `<option value="${client.name}">${client.name}</option>`).join('') : '<option value="" disabled selected>Prvo unesite komitenta</option>';
+}
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
