@@ -8,8 +8,12 @@ const expenseFields = document.querySelector('#expense-fields');
 const invoiceItems = document.querySelector('#invoice-items');
 const itemList = document.querySelector('#item-list');
 const addItemButton = document.querySelector('#add-item');
+const vatFields = document.querySelector('#vat-fields');
+const taxNote = document.querySelector('#tax-note');
 const db = window.itAntSupabase;
 let entryType = 'invoice';
+let companySettings = null;
+let editingInvoiceId = null;
 
 const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || '[]');
 const makeId = () => window.crypto?.randomUUID?.() || `entry-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -42,6 +46,15 @@ async function populateClients() {
   clientSelect.innerHTML = data.length ? '<option value="" disabled selected>Izaberite komitenta</option>' + data.map(client => `<option value="${client.id}">${client.name}</option>`).join('') : '<option value="" disabled selected>Prvo unesite komitenta</option>';
 }
 
+async function loadCompanySettings() {
+  const { data } = await db.from('company_users').select('company_id,companies(tax_regime,vat_number)').limit(1).single();
+  companySettings = data?.companies || { tax_regime: 'pausal' };
+  const vatEnabled = companySettings.tax_regime === 'books_vat';
+  vatFields.hidden = !vatEnabled;
+  taxNote.textContent = vatEnabled ? 'Preduzeće je u PDV sistemu. Iznosi stavki su bez PDV-a.' : 'Za ovaj poreski režim račun se izdaje bez PDV-a.';
+  if (!vatEnabled) form.vat_rate.value = 0;
+}
+
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
 const openModal = type => {
@@ -52,12 +65,13 @@ const openModal = type => {
   clientPicker.hidden = type !== 'invoice';
   expenseFields.hidden = type !== 'expense';
   invoiceItems.hidden = type !== 'invoice';
+  vatFields.hidden = type !== 'invoice' || companySettings?.tax_regime !== 'books_vat';
   clientSelect.required = type === 'invoice';
   form.amount.required = type !== 'invoice';
   form.reset();
   resetItems();
   itemList.querySelectorAll('input').forEach(input => { input.required = type === 'invoice'; });
-  if (type === 'invoice') populateClients();
+  if (type === 'invoice') { populateClients(); loadCompanySettings(); }
   (type === 'invoice' ? clientSelect : form.amount).focus();
 };
 
@@ -79,14 +93,27 @@ form.addEventListener('submit', async event => {
   const data = Object.fromEntries(new FormData(form));
   if (entryType === 'invoice') {
     data.items = [...itemList.querySelectorAll('.item-row')].map(row => ({ description: row.querySelector('.item-description').value.trim(), quantity: Number(row.querySelector('.item-quantity').value), price: Number(row.querySelector('.item-price').value) }));
-    data.amount = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    data.subtotal = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    data.vat_rate = companySettings?.tax_regime === 'books_vat' ? Number(data.vat_rate || 0) : 0;
+    data.vat_amount = data.subtotal * data.vat_rate / 100;
+    data.amount = data.subtotal + data.vat_amount;
   }
   if (entryType === 'invoice') {
     const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').limit(1).single();
     if (membershipError) { alert('Korisnik nije povezan sa preduzećem.'); return; }
+    const invoicePayload = { company_id: membership.company_id, client_id: data.client, status: data.status, total: data.amount, subtotal: data.subtotal, vat_rate: data.vat_rate, vat_amount: data.vat_amount, tax_regime: companySettings?.tax_regime || 'pausal', notes: null, updated_at: new Date().toISOString() };
+    if (editingInvoiceId) {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const { data: updated, error: updateError } = await db.from('invoices').update(invoicePayload).eq('id', editingInvoiceId).gt('created_at', cutoff).neq('status', 'cancelled').select('id').maybeSingle();
+      if (updateError || !updated) { alert('Račun više nije moguće izmeniti. Rok za izmenu je 48 sati.'); return; }
+      await db.from('invoice_items').delete().eq('invoice_id', editingInvoiceId);
+      const { error: editItemsError } = await db.from('invoice_items').insert(data.items.map(item => ({ invoice_id: editingInvoiceId, description: item.description, quantity: item.quantity, unit_price: item.price })));
+      if (editItemsError) { alert(`Stavke nisu izmenjene: ${editItemsError.message}`); return; }
+      modal.hidden = true; editingInvoiceId = null; window.location.href = 'racuni.html'; return;
+    }
     const { data: number, error: numberError } = await db.rpc('next_invoice_number');
     if (numberError) { alert(`Broj računa nije kreiran: ${numberError.message}`); return; }
-    const { data: invoice, error: invoiceError } = await db.from('invoices').insert({ company_id: membership.company_id, client_id: data.client, number, status: data.status, total: data.amount, notes: null }).select('id').single();
+    const { data: invoice, error: invoiceError } = await db.from('invoices').insert({ ...invoicePayload, number }).select('id').single();
     if (invoiceError) { alert(`Račun nije sačuvan: ${invoiceError.message}`); return; }
     const items = data.items.map(item => ({ invoice_id: invoice.id, description: item.description, quantity: item.quantity, unit_price: item.price }));
     const { error: itemsError } = await db.from('invoice_items').insert(items);
@@ -143,3 +170,14 @@ async function renderDashboard() {
 
 renderDashboard();
 if (window.location.hash === '#novi-racun') openModal('invoice');
+async function loadEditInvoice(id) {
+  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,invoice_items(description,quantity,unit_price)').eq('id', id).single();
+  if (error || !invoice) return;
+  editingInvoiceId = id; openModal('invoice');
+  await populateClients(); await loadCompanySettings();
+  clientSelect.value = invoice.client_id; form.status.value = invoice.status; resetItems();
+  itemList.innerHTML = invoice.invoice_items.map(item => `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required></div>`).join('');
+  modalTitle.textContent = 'Izmeni račun';
+};
+const editId = new URLSearchParams(window.location.search).get('edit');
+if (editId) loadEditInvoice(editId);

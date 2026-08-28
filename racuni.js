@@ -10,7 +10,7 @@ let invoices = [];
 let openInvoiceId = null;
 
 async function getRemoteInvoices() {
-  const { data, error } = await db.from('invoices').select('id,number,status,total,issue_date,notes,clients(name),invoice_items(description,quantity,unit_price,line_total)').order('issue_date', { ascending: false });
+  const { data, error } = await db.from('invoices').select('id,number,status,total,subtotal,vat_rate,vat_amount,tax_regime,issue_date,notes,clients(name),invoice_items(description,quantity,unit_price,line_total)').order('issue_date', { ascending: false });
   if (error) throw error;
   return data.map(invoice => ({ ...invoice, name: invoice.clients?.name || 'Nepoznat komitent', amount: invoice.total, createdAt: invoice.issue_date, items: (invoice.invoice_items || []).map(item => ({ description: item.description, quantity: item.quantity, price: item.unit_price })) }));
 }
@@ -46,15 +46,25 @@ function renderInvoices() {
 function showDetail(invoice) {
   detail.hidden = false; openInvoiceId = invoice.id;
   detailTitle.textContent = `${invoice.number} · ${invoice.name} · ${formatRsd(invoice.amount)}`;
-  detailContent.innerHTML = `<div class="detail-meta"><span>Status <select id="detail-status"><option value="paid" ${invoice.status === 'paid' ? 'selected' : ''}>Plaćen</option><option value="pending" ${invoice.status === 'pending' ? 'selected' : ''}>Čeka uplatu</option></select></span><span>Datum: <strong>${formatDate(invoice.createdAt)}</strong></span></div><div class="table-wrap"><table><thead><tr><th>Opis usluge</th><th>Količina</th><th>Cena</th><th>Ukupno</th></tr></thead><tbody>${(invoice.items || []).map(item => `<tr><td>${item.description}</td><td>${item.quantity}</td><td>${formatRsd(item.price)}</td><td>${formatRsd(item.quantity * item.price)}</td></tr>`).join('')}</tbody></table></div>`;
+  const editable = invoice.status !== 'cancelled' && Date.now() - new Date(invoice.createdAt).getTime() <= 48 * 60 * 60 * 1000;
+  detailContent.innerHTML = `<div class="detail-meta"><span>Status <select id="detail-status" ${invoice.status === 'cancelled' ? 'disabled' : ''}><option value="paid" ${invoice.status === 'paid' ? 'selected' : ''}>Plaćen</option><option value="pending" ${invoice.status === 'pending' ? 'selected' : ''}>Čeka uplatu</option><option value="cancelled" ${invoice.status === 'cancelled' ? 'selected' : ''}>Storniran</option></select></span><span>Datum: <strong>${formatDate(invoice.createdAt)}</strong></span><span>PDV: <strong>${invoice.tax_regime === 'books_vat' ? formatRsd(invoice.vat_amount) : 'Nije u sistemu PDV'}</strong></span></div><div class="invoice-actions">${editable ? `<a class="table-action" href="poslovanje.html?edit=${invoice.id}">Izmeni račun</a><button class="table-action danger" id="cancel-invoice" type="button">Storniraj račun</button>` : ''}</div><div class="table-wrap"><table><thead><tr><th>Opis usluge</th><th>Količina</th><th>Cena</th><th>Ukupno</th></tr></thead><tbody>${(invoice.items || []).map(item => `<tr><td>${item.description}</td><td>${item.quantity}</td><td>${formatRsd(item.price)}</td><td>${formatRsd(item.quantity * item.price)}</td></tr>`).join('')}</tbody></table></div>`;
   document.querySelector('#detail-status').addEventListener('change', event => updateStatus(invoice, event.target.value));
+  document.querySelector('#cancel-invoice')?.addEventListener('click', () => cancelInvoice(invoice));
   detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function updateStatus(invoice, status) {
+  if (status === 'cancelled') { cancelInvoice(invoice); return; }
   const { error } = await db.from('invoices').update({ status }).eq('id', invoice.id);
   if (error) { alert(`Status nije promenjen: ${error.message}`); return; }
   invoice.status = status; renderInvoices(); showDetail(invoice);
+}
+
+async function cancelInvoice(invoice) {
+  if (!confirm(`Stornirati račun ${invoice.number}? Račun ostaje evidentiran kao storniran.`)) return;
+  const { error } = await db.from('invoices').update({ status: 'cancelled', cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', invoice.id).neq('status', 'cancelled');
+  if (error) { alert(`Račun nije storniran: ${error.message}`); return; }
+  invoice.status = 'cancelled'; renderInvoices(); showDetail(invoice);
 }
 
 async function load() {
