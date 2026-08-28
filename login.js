@@ -11,11 +11,11 @@ form.addEventListener('submit', async event => {
   try {
     const result = await Promise.race([
       window.itAntSupabase.auth.signInWithPassword({ email: values.email, password: values.password }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 45000))
     ]);
     if (result.error) { message.textContent = 'Email ili lozinka nisu ispravni.'; return; }
     window.location.href = nextPage;
   } catch (error) {
-    message.textContent = error.message === 'timeout' ? 'Supabase trenutno ne odgovara. Pokušaj ponovo za nekoliko trenutaka.' : 'Prijava nije uspela. Proveri internet konekciju.';
+    message.textContent = error.message === 'timeout' ? 'Supabase trenutno odgovara usporeno. Pokušaj ponovo za nekoliko trenutaka.' : 'Prijava nije uspela. Proveri internet konekciju.';
   } finally { button.disabled = false; }
 });
