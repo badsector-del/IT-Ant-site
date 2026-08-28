@@ -32,7 +32,7 @@ h1 { margin-top:5px; font-size:30px; letter-spacing:-.04em; } h2 { margin-top:2p
 .modal-backdrop[hidden] { display:none; }
 .modal-backdrop { overflow-y:auto; align-items:start; }
 .modal { max-height:calc(100vh - 40px); overflow-y:auto; }
-.modal-backdrop { display:grid !important; overflow-y:auto !important; align-items:start; }
+.modal-backdrop { display:grid; overflow-y:auto; align-items:start; }
 .modal { min-height:0; height:auto; max-height:calc(100vh - 40px) !important; margin:20px auto; overflow-y:auto !important; align-content:start; scrollbar-width:thin; scrollbar-color:var(--orange) rgba(255,255,255,.08); }
 .modal::-webkit-scrollbar { width:12px; }.modal::-webkit-scrollbar-track { background:rgba(255,255,255,.08); border-radius:8px; }.modal::-webkit-scrollbar-thumb { background:var(--orange); border-radius:8px; border:2px solid #1a1f27; }
 .modal { position:relative; width:min(100%,430px); display:grid; gap:14px; padding:28px; border:1px solid rgba(255,109,26,.3); border-radius:18px; background:#1a1f27; box-shadow:0 25px 80px rgba(0,0,0,.45); }
