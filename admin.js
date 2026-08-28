@@ -31,14 +31,14 @@ function render(data) {
   }).join('') : '<tr><td colspan="6" class="empty-state">Još nema preduzeća.</td></tr>';
 }
 
-function resetCompanyForm() { editingCompanyId = null; companyForm.reset(); companyFormTitle.textContent = 'Dodaj preduzeće'; companySubmit.textContent = 'Sačuvaj preduzeće'; companyCancel.hidden = true; }
+function resetCompanyForm() { editingCompanyId = null; companyForm.reset(); window.setDatePickerValue('regime_effective_from', ''); companyFormTitle.textContent = 'Dodaj preduzeće'; companySubmit.textContent = 'Sačuvaj preduzeće'; companyCancel.hidden = true; }
 
 list.addEventListener('click', async event => {
   const button = event.target.closest('button'); if (!button) return;
   const company = (window.adminData?.companies || []).find(item => item.id === button.dataset.companyId); if (!company) return;
   if (button.classList.contains('edit-company')) {
     editingCompanyId = company.id; companyFormTitle.textContent = 'Izmeni preduzeće'; companySubmit.textContent = 'Sačuvaj izmene'; companyCancel.hidden = false;
-    companyForm.name.value = company.name; companyForm.pib.value = company.pib || ''; companyForm.tax_regime.value = company.tax_regime || 'pausal'; companyForm.vat_number.value = company.vat_number || ''; companyForm.regime_effective_from.value = company.regime_effective_from || '';
+    companyForm.name.value = company.name; companyForm.pib.value = company.pib || ''; companyForm.tax_regime.value = company.tax_regime || 'pausal'; companyForm.vat_number.value = company.vat_number || ''; window.setDatePickerValue('regime_effective_from', company.regime_effective_from || '');
     companyForm.name.focus();
   } else if (confirm(`Obrisati preduzeće "${company.name}"?`)) {
     try { await callAdmin('delete-company', { company_id: company.id }); setMessage('Preduzeće je obrisano.'); await load(); } catch (error) { setMessage(error.message, true); }
