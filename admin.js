@@ -29,7 +29,7 @@ function renderUsers(data) {
   const userList = document.querySelector('#admin-user-list');
   const users = data.memberships || [];
   const companyOptions = (data.companies || []).map(company => `<option value="${company.id}">${company.name}</option>`).join('');
-  userList.innerHTML = users.length ? users.map(member => `<tr><td>${member.email || member.user_id}</td><td><select class="user-company" data-user-id="${member.user_id}">${companyOptions}</select></td><td><input class="user-password" data-user-id="${member.user_id}" type="password" minlength="8" placeholder="Nova lozinka"></td><td><button class="table-action move-user" data-user-id="${member.user_id}" type="button">Promeni</button><button class="table-action reset-user" data-user-id="${member.user_id}" type="button">Resetuj</button></td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema korisničkih naloga.</td></tr>';
+  userList.innerHTML = users.length ? users.map(member => `<tr><td>${member.email || member.user_id}</td><td><select class="user-company" data-user-id="${member.user_id}">${companyOptions}</select></td><td><input class="user-password" data-user-id="${member.user_id}" type="password" minlength="8" placeholder="Nova lozinka"></td><td><button class="table-action move-user" data-user-id="${member.user_id}" type="button">Promeni</button><button class="table-action reset-user" data-user-id="${member.user_id}" type="button">Resetuj</button><button class="table-action danger delete-user" data-user-id="${member.user_id}" type="button">Obriši</button></td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema korisničkih naloga.</td></tr>';
   users.forEach(member => { const select = userList.querySelector(`select[data-user-id="${member.user_id}"]`); if (select) select.value = member.company_id; });
 }
 
@@ -44,7 +44,10 @@ document.querySelector('#admin-user-list').addEventListener('click', async event
   const button = event.target.closest('button'); if (!button) return;
   const userId = button.dataset.userId;
   try {
-    if (button.classList.contains('move-user')) {
+    if (button.classList.contains('delete-user')) {
+      if (!confirm('Obrisati ovaj korisnički nalog? Povezani podaci mogu biti obrisani zajedno sa nalogom.')) return;
+      await callAdmin('delete-user', { user_id: userId }); setMessage('Korisnički nalog je obrisan.'); await load();
+    } else if (button.classList.contains('move-user')) {
       const companyId = document.querySelector(`select[data-user-id="${userId}"]`).value;
       await callAdmin('move-user', { user_id: userId, company_id: companyId }); setMessage('Korisnik je prebačen u izabrano preduzeće.'); await load();
     } else {

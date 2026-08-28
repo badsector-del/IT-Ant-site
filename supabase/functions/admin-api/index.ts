@@ -59,6 +59,15 @@ Deno.serve(async request => {
       await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'move_user', target_type: 'user', target_id: body.user_id, details: { company_id: body.company_id } });
       return json({ user_id: body.user_id, company_id: body.company_id });
     }
+    if (body.action === 'delete-user') {
+      if (!body.user_id || body.user_id === user.id) return json({ error: 'Ne možete obrisati sopstveni administratorski nalog.' }, 400);
+      const { data: target } = await admin.auth.admin.getUserById(body.user_id);
+      if (!target.user) return json({ error: 'Korisnik ne postoji.' }, 404);
+      await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'delete_user', target_type: 'user', target_id: body.user_id, details: { email: target.user.email || null } });
+      const { error } = await admin.auth.admin.deleteUser(body.user_id);
+      if (error) throw error;
+      return json({ user_id: body.user_id });
+    }
     return json({ error: 'Nepoznata radnja.' }, 400);
   } catch (error) { return json({ error: error instanceof Error ? error.message : 'Greška servera.' }, 500); }
 });
