@@ -34,12 +34,12 @@ const nextInvoiceNumber = (entries, date) => { const year = date.getFullYear(); 
 async function populateClients() {
   clientSelect.innerHTML = '<option value="" disabled selected>Učitavanje komitenata...</option>';
   await db.auth.getSession();
-  const { data, error } = await db.from('clients').select('name').order('name', { ascending: true });
+  const { data, error } = await db.from('clients').select('id,name').order('name', { ascending: true });
   if (error) {
     clientSelect.innerHTML = '<option value="" disabled selected>Komitenti nisu dostupni</option>';
     return;
   }
-  clientSelect.innerHTML = data.length ? '<option value="" disabled selected>Izaberite komitenta</option>' + data.map(client => `<option value="${client.name}">${client.name}</option>`).join('') : '<option value="" disabled selected>Prvo unesite komitenta</option>';
+  clientSelect.innerHTML = data.length ? '<option value="" disabled selected>Izaberite komitenta</option>' + data.map(client => `<option value="${client.id}">${client.name}</option>`).join('') : '<option value="" disabled selected>Prvo unesite komitenta</option>';
 }
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
@@ -74,13 +74,26 @@ function resetItems() {
   itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>';
 }
 
-form.addEventListener('submit', event => {
+form.addEventListener('submit', async event => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
   if (entryType === 'invoice') {
-    data.name = data.client;
     data.items = [...itemList.querySelectorAll('.item-row')].map(row => ({ description: row.querySelector('.item-description').value.trim(), quantity: Number(row.querySelector('.item-quantity').value), price: Number(row.querySelector('.item-price').value) }));
     data.amount = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  }
+  if (entryType === 'invoice') {
+    const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').limit(1).single();
+    if (membershipError) { alert('Korisnik nije povezan sa preduzećem.'); return; }
+    const { data: number, error: numberError } = await db.rpc('next_invoice_number');
+    if (numberError) { alert(`Broj računa nije kreiran: ${numberError.message}`); return; }
+    const { data: invoice, error: invoiceError } = await db.from('invoices').insert({ company_id: membership.company_id, client_id: data.client, number, status: data.status, total: data.amount, notes: null }).select('id').single();
+    if (invoiceError) { alert(`Račun nije sačuvan: ${invoiceError.message}`); return; }
+    const items = data.items.map(item => ({ invoice_id: invoice.id, description: item.description, quantity: item.quantity, unit_price: item.price }));
+    const { error: itemsError } = await db.from('invoice_items').insert(items);
+    if (itemsError) { await db.from('invoices').delete().eq('id', invoice.id); alert(`Stavke računa nisu sačuvane: ${itemsError.message}`); return; }
+    modal.hidden = true;
+    window.location.href = 'racuni.html';
+    return;
   }
   const entries = JSON.parse(localStorage.getItem('it-ant-entries') || '[]');
   const createdAt = new Date().toISOString();
