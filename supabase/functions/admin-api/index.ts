@@ -41,6 +41,24 @@ Deno.serve(async request => {
       await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'create_user', target_type: 'user', target_id: created.user.id, details: { email: body.email.trim(), company_id: body.company_id, role: 'member' } });
       return json({ user_id: created.user.id });
     }
+    if (body.action === 'reset-password') {
+      if (!body.user_id || !body.password || body.password.length < 8) return json({ error: 'Nova lozinka mora imati najmanje 8 karaktera.' }, 400);
+      const { data: updated, error } = await admin.auth.admin.updateUserById(body.user_id, { password: body.password });
+      if (error) throw error;
+      await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'reset_password', target_type: 'user', target_id: body.user_id, details: { email: updated.user?.email || null } });
+      return json({ user_id: body.user_id });
+    }
+    if (body.action === 'move-user') {
+      if (!body.user_id || !body.company_id) return json({ error: 'Izaberite preduzeće.' }, 400);
+      const { data: membership, error } = await admin.from('company_users').update({ company_id: body.company_id }).eq('user_id', body.user_id).select('user_id').maybeSingle();
+      if (error) throw error;
+      if (!membership) {
+        const { error: insertError } = await admin.from('company_users').insert({ company_id: body.company_id, user_id: body.user_id, role: 'member' });
+        if (insertError) throw insertError;
+      }
+      await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'move_user', target_type: 'user', target_id: body.user_id, details: { company_id: body.company_id } });
+      return json({ user_id: body.user_id, company_id: body.company_id });
+    }
     return json({ error: 'Nepoznata radnja.' }, 400);
   } catch (error) { return json({ error: error instanceof Error ? error.message : 'Greška servera.' }, 500); }
 });
