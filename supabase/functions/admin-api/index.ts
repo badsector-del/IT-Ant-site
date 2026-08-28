@@ -16,7 +16,7 @@ Deno.serve(async request => {
     const body = await request.json();
     if (body.action === 'list') {
       const [{ data: companies, error: companiesError }, { data: memberships, error: membersError }, { data: users, error: usersError }, { data: logs, error: logsError }] = await Promise.all([
-        admin.from('companies').select('id,name,pib,address,bank_account,tax_regime,vat_number,regime_effective_from,created_at').order('created_at'),
+        admin.from('companies').select('id,name,pib,address,bank_name,bank_account,tax_regime,vat_number,regime_effective_from,created_at').order('created_at'),
         admin.from('company_users').select('company_id,user_id,role'),
         admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
         admin.from('admin_audit_logs').select('id,admin_user_id,action,target_type,target_id,details,created_at').order('created_at', { ascending: false }).limit(50)
@@ -27,14 +27,14 @@ Deno.serve(async request => {
     }
     if (body.action === 'create-company') {
       if (!body.name?.trim()) return json({ error: 'Naziv preduzeća je obavezan.' }, 400);
-      const { data, error } = await admin.from('companies').insert({ name: body.name.trim(), pib: body.pib?.trim() || null, address: body.address?.trim() || null, bank_account: body.bank_account?.trim() || null, tax_regime: body.tax_regime || 'pausal', vat_number: body.vat_number?.trim() || null, regime_effective_from: body.regime_effective_from || new Date().toISOString().slice(0, 10) }).select('id').single();
+      const { data, error } = await admin.from('companies').insert({ name: body.name.trim(), pib: body.pib?.trim() || null, address: body.address?.trim() || null, bank_name: body.bank_name?.trim() || null, bank_account: body.bank_account?.trim() || null, tax_regime: body.tax_regime || 'pausal', vat_number: body.vat_number?.trim() || null, regime_effective_from: body.regime_effective_from || new Date().toISOString().slice(0, 10) }).select('id').single();
       if (error) throw error;
       await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'create_company', target_type: 'company', target_id: data.id, details: { name: body.name.trim(), pib: body.pib?.trim() || null, tax_regime: body.tax_regime || 'pausal' } });
       return json({ company: data });
     }
     if (body.action === 'update-company') {
       if (!body.company_id || !body.name?.trim()) return json({ error: 'Naziv preduzeća je obavezan.' }, 400);
-      const { data, error } = await admin.from('companies').update({ name: body.name.trim(), pib: body.pib?.trim() || null, address: body.address?.trim() || null, bank_account: body.bank_account?.trim() || null, tax_regime: body.tax_regime || 'pausal', vat_number: body.vat_number?.trim() || null, regime_effective_from: body.regime_effective_from || new Date().toISOString().slice(0, 10) }).eq('id', body.company_id).select('id').single();
+      const { data, error } = await admin.from('companies').update({ name: body.name.trim(), pib: body.pib?.trim() || null, address: body.address?.trim() || null, bank_name: body.bank_name?.trim() || null, bank_account: body.bank_account?.trim() || null, tax_regime: body.tax_regime || 'pausal', vat_number: body.vat_number?.trim() || null, regime_effective_from: body.regime_effective_from || new Date().toISOString().slice(0, 10) }).eq('id', body.company_id).select('id').single();
       if (error) throw error;
       await admin.from('admin_audit_logs').insert({ admin_user_id: user.id, action: 'update_company', target_type: 'company', target_id: data.id, details: { name: body.name.trim(), tax_regime: body.tax_regime || 'pausal' } });
       return json({ company: data });

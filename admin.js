@@ -38,7 +38,7 @@ list.addEventListener('click', async event => {
   const company = (window.adminData?.companies || []).find(item => item.id === button.dataset.companyId); if (!company) return;
   if (button.classList.contains('edit-company')) {
     editingCompanyId = company.id; companyFormTitle.textContent = 'Izmeni preduzeće'; companySubmit.textContent = 'Sačuvaj izmene'; companyCancel.hidden = false;
-    companyForm.name.value = company.name; companyForm.pib.value = company.pib || ''; companyForm.address.value = company.address || ''; companyForm.bank_account.value = company.bank_account || ''; companyForm.tax_regime.value = company.tax_regime || 'pausal'; companyForm.vat_number.value = company.vat_number || ''; window.setDatePickerValue('regime_effective_from', company.regime_effective_from || '');
+    companyForm.name.value = company.name; companyForm.pib.value = company.pib || ''; companyForm.address.value = company.address || ''; companyForm.bank_name.value = company.bank_name || ''; companyForm.bank_account.value = company.bank_account || ''; companyForm.tax_regime.value = company.tax_regime || 'pausal'; companyForm.vat_number.value = company.vat_number || ''; window.setDatePickerValue('regime_effective_from', company.regime_effective_from || '');
     companyForm.name.focus();
   } else if (confirm(`Obrisati preduzeće "${company.name}"?`)) {
     try { await callAdmin('delete-company', { company_id: company.id }); setMessage('Preduzeće je obrisano.'); await load(); } catch (error) { setMessage(error.message, true); }
@@ -80,7 +80,7 @@ document.querySelector('#admin-user-list').addEventListener('click', async event
 
 companyForm.addEventListener('submit', async event => {
   event.preventDefault(); const values = Object.fromEntries(new FormData(companyForm));
-  try { const wasEditing = Boolean(editingCompanyId); await callAdmin(wasEditing ? 'update-company' : 'create-company', { company_id: editingCompanyId, name: values.name, pib: values.pib, address: values.address, bank_account: values.bank_account, tax_regime: values.tax_regime, vat_number: values.vat_number, regime_effective_from: values.regime_effective_from }); resetCompanyForm(); setMessage(wasEditing ? 'Izmene su sačuvane.' : 'Preduzeće je sačuvano.'); await load(); } catch (error) { setMessage(error.message, true); }
+  try { const wasEditing = Boolean(editingCompanyId); await callAdmin(wasEditing ? 'update-company' : 'create-company', { company_id: editingCompanyId, name: values.name, pib: values.pib, address: values.address, bank_name: values.bank_name, bank_account: values.bank_account, tax_regime: values.tax_regime, vat_number: values.vat_number, regime_effective_from: values.regime_effective_from }); resetCompanyForm(); setMessage(wasEditing ? 'Izmene su sačuvane.' : 'Preduzeće je sačuvano.'); await load(); } catch (error) { setMessage(error.message, true); }
 });
 
 companyCancel.addEventListener('click', resetCompanyForm);
