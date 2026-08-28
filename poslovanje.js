@@ -52,7 +52,10 @@ async function loadCompanySettings() {
   const vatEnabled = companySettings.tax_regime === 'books_vat';
   vatFields.hidden = !vatEnabled;
   taxNote.textContent = vatEnabled ? 'Preduzeće je u PDV sistemu. Iznosi stavki su bez PDV-a.' : 'Za ovaj poreski režim račun se izdaje bez PDV-a.';
-  if (!vatEnabled) form.vat_rate.value = 0;
+  itemList.querySelectorAll('.item-vat').forEach(select => {
+    select.disabled = !vatEnabled;
+    if (!vatEnabled) select.value = '20';
+  });
 }
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
@@ -79,23 +82,30 @@ document.querySelectorAll('[data-modal]').forEach(button => button.addEventListe
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
 addItemButton.addEventListener('click', () => {
-  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>');
+  itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20">20% - Opšta</option><option value="10">10% - Posebna</option><option value="exempt_right">Oslobođeno sa pravom</option><option value="exempt_no">Oslobođeno bez prava</option></select></div>');
   itemList.lastElementChild.querySelector('.item-description').focus();
 });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-item') && itemList.children.length > 1) event.target.closest('.item-row').remove(); });
 
 function resetItems() {
-  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div>';
+  itemList.innerHTML = '<div class="item-row"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20">20% - Opšta</option><option value="10">10% - Posebna</option><option value="exempt_right">Oslobođeno sa pravom</option><option value="exempt_no">Oslobođeno bez prava</option></select></div>';
 }
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
   if (entryType === 'invoice') {
-    data.items = [...itemList.querySelectorAll('.item-row')].map(row => ({ description: row.querySelector('.item-description').value.trim(), quantity: Number(row.querySelector('.item-quantity').value), price: Number(row.querySelector('.item-price').value) }));
+    data.items = [...itemList.querySelectorAll('.item-row')].map(row => {
+      const vatValue = row.querySelector('.item-vat').value;
+      const taxable = vatValue === '20' || vatValue === '10';
+      const vatRate = companySettings?.tax_regime === 'books_vat' && taxable ? Number(vatValue) : 0;
+      const vatTreatment = companySettings?.tax_regime === 'books_vat' ? (taxable ? 'taxable' : vatValue) : 'taxable';
+      const netAmount = Number(row.querySelector('.item-quantity').value) * Number(row.querySelector('.item-price').value);
+      return { description: row.querySelector('.item-description').value.trim(), quantity: Number(row.querySelector('.item-quantity').value), price: Number(row.querySelector('.item-price').value), vatRate, vatTreatment, vatAmount: netAmount * vatRate / 100 };
+    });
     data.subtotal = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-    data.vat_rate = companySettings?.tax_regime === 'books_vat' ? Number(data.vat_rate || 0) : 0;
-    data.vat_amount = data.subtotal * data.vat_rate / 100;
+    data.vat_rate = data.items.every(item => item.vatRate === data.items[0]?.vatRate) ? (data.items[0]?.vatRate || 0) : 0;
+    data.vat_amount = data.items.reduce((sum, item) => sum + item.vatAmount, 0);
     data.amount = data.subtotal + data.vat_amount;
   }
   if (entryType === 'invoice') {
@@ -107,7 +117,7 @@ form.addEventListener('submit', async event => {
       const { data: updated, error: updateError } = await db.from('invoices').update(invoicePayload).eq('id', editingInvoiceId).gt('created_at', cutoff).neq('status', 'cancelled').select('id').maybeSingle();
       if (updateError || !updated) { alert('Račun više nije moguće izmeniti. Rok za izmenu je 48 sati.'); return; }
       await db.from('invoice_items').delete().eq('invoice_id', editingInvoiceId);
-      const { error: editItemsError } = await db.from('invoice_items').insert(data.items.map(item => ({ invoice_id: editingInvoiceId, description: item.description, quantity: item.quantity, unit_price: item.price })));
+      const { error: editItemsError } = await db.from('invoice_items').insert(data.items.map(item => ({ invoice_id: editingInvoiceId, description: item.description, quantity: item.quantity, unit_price: item.price, vat_rate: item.vatRate, vat_treatment: item.vatTreatment, vat_amount: item.vatAmount })));
       if (editItemsError) { alert(`Stavke nisu izmenjene: ${editItemsError.message}`); return; }
       modal.hidden = true; editingInvoiceId = null; window.location.href = 'racuni.html'; return;
     }
@@ -115,7 +125,7 @@ form.addEventListener('submit', async event => {
     if (numberError) { alert(`Broj računa nije kreiran: ${numberError.message}`); return; }
     const { data: invoice, error: invoiceError } = await db.from('invoices').insert({ ...invoicePayload, number }).select('id').single();
     if (invoiceError) { alert(`Račun nije sačuvan: ${invoiceError.message}`); return; }
-    const items = data.items.map(item => ({ invoice_id: invoice.id, description: item.description, quantity: item.quantity, unit_price: item.price }));
+    const items = data.items.map(item => ({ invoice_id: invoice.id, description: item.description, quantity: item.quantity, unit_price: item.price, vat_rate: item.vatRate, vat_treatment: item.vatTreatment, vat_amount: item.vatAmount }));
     const { error: itemsError } = await db.from('invoice_items').insert(items);
     if (itemsError) { await db.from('invoices').delete().eq('id', invoice.id); alert(`Stavke računa nisu sačuvane: ${itemsError.message}`); return; }
     modal.hidden = true;
@@ -171,12 +181,13 @@ async function renderDashboard() {
 renderDashboard();
 if (window.location.hash === '#novi-racun') openModal('invoice');
 async function loadEditInvoice(id) {
-  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,invoice_items(description,quantity,unit_price)').eq('id', id).single();
+  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,invoice_items(description,quantity,unit_price,vat_rate,vat_treatment)').eq('id', id).single();
   if (error || !invoice) return;
   editingInvoiceId = id; openModal('invoice');
   await populateClients(); await loadCompanySettings();
   clientSelect.value = invoice.client_id; form.status.value = invoice.status; resetItems();
-  itemList.innerHTML = invoice.invoice_items.map(item => `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required></div>`).join('');
+  itemList.innerHTML = invoice.invoice_items.map(item => { const vatValue = item.vat_treatment === 'exempt_right' || item.vat_treatment === 'exempt_no' ? item.vat_treatment : String(item.vat_rate ?? 20); return `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20" ${vatValue === '20' ? 'selected' : ''}>20% - Opšta</option><option value="10" ${vatValue === '10' ? 'selected' : ''}>10% - Posebna</option><option value="exempt_right" ${vatValue === 'exempt_right' ? 'selected' : ''}>Oslobođeno sa pravom</option><option value="exempt_no" ${vatValue === 'exempt_no' ? 'selected' : ''}>Oslobođeno bez prava</option></select></div>`; }).join('');
+  itemList.querySelectorAll('.item-vat').forEach(select => { select.disabled = companySettings?.tax_regime !== 'books_vat'; });
   modalTitle.textContent = 'Izmeni račun';
 };
 const editId = new URLSearchParams(window.location.search).get('edit');
