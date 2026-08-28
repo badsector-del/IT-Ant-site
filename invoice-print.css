@@ -28,4 +28,6 @@ table { width:100%; border-collapse:collapse; }.items th { padding:9px 7px; back
 .page-sheet { break-after:page; page-break-after:always; }
 .page-sheet:last-child { break-after:auto; page-break-after:auto; }
 .continuation-title { margin:0 0 22px; color:#536071; font-size:13px; font-weight:700; }
+.page-sheet + .page-sheet { margin-top:20px; }
+@media print { .page-sheet + .page-sheet { margin-top:0; } }
 @media screen and (max-width:800px) { #invoice-page { width:100%; margin:0; }.sheet { padding:28px 20px; }.invoice-head,.parties { display:block; }.invoice-title { margin-top:20px; text-align:left; }.totals { width:100%; } }
