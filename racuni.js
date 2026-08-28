@@ -53,7 +53,7 @@ function showDetail(invoice) {
   document.querySelector('.invoice-actions').insertAdjacentHTML('afterbegin', `<button class="table-action" id="print-invoice" type="button">PDF / Štampaj</button>`);
   document.querySelector('#detail-status').addEventListener('change', event => updateStatus(invoice, event.target.value));
   document.querySelector('#cancel-invoice')?.addEventListener('click', () => cancelInvoice(invoice));
-  document.querySelector('#print-invoice')?.addEventListener('click', () => window.open(`invoice-print.html?id=${invoice.id}`, '_blank', 'noopener'));
+  document.querySelector('#print-invoice')?.addEventListener('click', () => window.open(`invoice-print.html?id=${invoice.id}&v=3`, '_blank', 'noopener'));
   detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
