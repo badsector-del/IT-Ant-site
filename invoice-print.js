@@ -25,7 +25,7 @@ async function load() {
   const originalNotes = originalSheet.querySelector('.notes');
   const originalFooter = originalSheet.querySelector('.footer');
   const rows = [...originalTable.querySelectorAll('tbody tr')];
-  const rowsPerPage = 16;
+  const rowsPerPage = 14;
   const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage));
   const footerHtml = pageNumber => `<div>Račun broj ${esc(invoice.number)} · ${esc(company.name || 'Preduzeće')} · strana ${pageNumber}/${pageCount}</div>${company.tax_regime === 'books_vat' ? '' : '<div>Ne podleže obračunu i plaćanju poreza po Zakonu o PDV-u</div>'}<div>${payment}</div><div>Dokument je važeći bez potpisa</div>`;
   originalSheet.remove();
