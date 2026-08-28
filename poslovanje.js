@@ -61,10 +61,10 @@ async function loadCompanySettings() {
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
-const returnTo = new URLSearchParams(window.location.search).get('return') || (document.referrer.includes('racuni.html') ? 'racuni' : '');
+const returnTo = new URLSearchParams(window.location.search).get('return') || sessionStorage.getItem('it-ant-invoice-return') || (document.referrer.includes('racuni.html') ? 'racuni' : '');
 const closeModal = () => {
   modal.hidden = true;
-  if (returnTo === 'racuni') window.location.href = 'racuni.html';
+  if (returnTo === 'racuni') { sessionStorage.removeItem('it-ant-invoice-return'); window.location.href = 'racuni.html'; }
 };
 const openModal = type => {
   entryType = type;

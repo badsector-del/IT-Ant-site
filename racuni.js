@@ -6,6 +6,7 @@ const detailTitle = document.querySelector('#detail-title');
 const detailContent = document.querySelector('#detail-content');
 const formatRsd = value => `${Number(value || 0).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
+document.querySelector('a[href*="poslovanje.html"][href*="novi-racun"]')?.addEventListener('click', () => sessionStorage.setItem('it-ant-invoice-return', 'racuni'));
 let invoices = [];
 let openInvoiceId = null;
 
