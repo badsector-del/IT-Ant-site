@@ -22,8 +22,8 @@
 
     <main class="main-content" id="pregled">
       <header class="app-header">
-        <div><p class="overline">27.08.2026.</p><h1>Dobro jutro, Marko</h1></div>
-        <div class="header-actions"><button class="icon-button" aria-label="Obaveštenja">♧</button><div class="user-chip"><span>MN</span><strong>Marko Novaković</strong></div><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div>
+        <div><p class="overline">27.08.2026.</p><h1>Dobro jutro, <span data-user-first-name>korisniče</span></h1><p class="active-company"><span>Preduzeće:</span> <strong data-company-name>Učitavanje...</strong></p></div>
+        <div class="header-actions"><button class="icon-button" aria-label="Obaveštenja">♧</button><div class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></div><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div>
       </header>
 
       <section class="quick-actions" aria-label="Brze akcije">
@@ -47,6 +47,6 @@
     </main>
   </div>
   <div class="modal-backdrop" id="modal" hidden><form class="modal" id="entry-form"><button class="modal-close" type="button" aria-label="Zatvori">×</button><p class="overline">Brzi unos</p><h2 id="modal-title">Novi račun</h2><label id="client-picker">Komitent<select name="client" id="client-select" required></select></label><div id="invoice-items" hidden><div class="items-heading"><span>Opis usluge</span><span></span><span>Količina</span><span>Cena</span></div><div id="item-list"><div class="item-row"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required></div></div><button class="add-item" id="add-item" type="button">+ Dodaj stavku</button><div id="vat-fields" hidden><p class="tax-note" id="tax-note"></p><label>PDV stopa (%)<input name="vat_rate" type="number" min="0" max="100" step="0.01" value="20"></label></div></div><div id="expense-fields" hidden><label>Iznos<input name="amount" type="number" min="0" placeholder="0"></label><label>Opis<input name="description" placeholder="Na šta se odnosi unos"></label></div><label id="status-field">Status<select name="status"><option value="paid">Plaćen</option><option value="pending">Čeka uplatu</option></select></label><button class="primary-action modal-submit" type="submit">Sačuvaj unos</button></form></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="logout.js"></script><script src="poslovanje.js?v=12"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="app-context.js"></script><script src="logout.js"></script><script src="poslovanje.js?v=12"></script>
 </body>
 </html>
