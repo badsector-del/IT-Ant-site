@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IT ANT Poslovanje</title>
-  <link rel="stylesheet" href="poslovanje.css?v=8">
+  <link rel="stylesheet" href="poslovanje.css?v=9">
 </head>
 <body>
   <div class="app-shell">
@@ -47,6 +47,6 @@
     </main>
   </div>
   <div class="modal-backdrop" id="modal" hidden><form class="modal" id="entry-form"><button class="modal-close" type="button" aria-label="Zatvori">×</button><p class="overline">Brzi unos</p><h2 id="modal-title">Novi račun</h2><label id="client-picker">Komitent<select name="client" id="client-select" required></select></label><div id="invoice-items" hidden><div class="items-heading"><span>Opis usluge</span><span></span><span>Količina</span><span>Cena</span><span>PDV</span></div><div id="item-list"><div class="item-row"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20">20% - Opšta</option><option value="10">10% - Posebna</option><option value="exempt_right">Oslobođeno sa pravom</option><option value="exempt_no">Oslobođeno bez prava</option></select></div></div><button class="add-item" id="add-item" type="button">+ Dodaj stavku</button><div id="vat-fields" hidden><p class="tax-note" id="tax-note"></p></div></div><div id="expense-fields" hidden><label>Iznos<input name="amount" type="number" min="0" placeholder="0"></label><label>Opis<input name="description" placeholder="Na šta se odnosi unos"></label></div><label id="status-field">Status<select name="status"><option value="paid">Plaćen</option><option value="pending">Čeka uplatu</option></select></label><button class="primary-action modal-submit" type="submit">Sačuvaj unos</button></form></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="app-context.js"></script><script src="logout.js"></script><script src="poslovanje.js?v=14"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="app-context.js"></script><script src="logout.js"></script><script src="poslovanje.js?v=15"></script>
 </body>
 </html>
