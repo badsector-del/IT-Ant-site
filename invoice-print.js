@@ -22,6 +22,7 @@ async function load() {
   const invoiceData = document.querySelector('.invoice-data');
   invoiceData?.querySelector('.party-label')?.remove();
   invoiceData?.querySelector('p')?.classList.add('invoice-number');
+  document.querySelector('.recipient .party-label')?.remove();
   const originalSheet = document.querySelector('.sheet');
   const originalHeader = originalSheet.querySelector('.invoice-head');
   const originalParties = originalSheet.querySelector('.parties');
