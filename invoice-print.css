@@ -15,6 +15,8 @@ table { width:100%; border-collapse:collapse; }.items th { padding:9px 7px; back
 .page-counter::before { content:counter(page) " / " counter(pages); }
 .sheet { min-height:267mm; display:flex; flex-direction:column; }
 .footer { margin-top:auto; }
+.sheet { position:relative; padding-bottom:38mm; }
+.sheet .footer { position:absolute; left:14mm; right:14mm; bottom:10mm; margin:0; }
 @media print { .sheet { min-height:267mm !important; padding-bottom:28mm !important; } .footer { position:fixed; bottom:0; margin:0; } }
 .error { padding:40px; text-align:center; color:#b42318; }
 .parties .recipient { justify-self:end; width:100%; text-align:right; }
