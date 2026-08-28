@@ -74,6 +74,7 @@ const openModal = type => {
   clientPicker.hidden = type !== 'invoice';
   expenseFields.hidden = type !== 'expense';
   invoiceItems.hidden = type !== 'invoice';
+  if (type === 'invoice') invoiceItems.removeAttribute('hidden');
   vatFields.hidden = type !== 'invoice' || companySettings?.tax_regime !== 'books_vat';
   itemList.querySelectorAll('.item-vat').forEach(select => { select.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat'); });
   clientSelect.required = type === 'invoice';

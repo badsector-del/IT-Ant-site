@@ -32,8 +32,8 @@ h1 { margin-top:5px; font-size:30px; letter-spacing:-.04em; } h2 { margin-top:2p
 .modal-backdrop[hidden] { display:none; }
 .modal-backdrop { overflow-y:auto; align-items:start; }
 .modal { max-height:calc(100vh - 40px); overflow-y:auto; }
-.modal-backdrop { display:block !important; overflow-y:auto !important; }
-.modal { min-height:0; height:calc(100vh - 40px); max-height:none !important; margin:20px auto; overflow-y:auto !important; scrollbar-width:thin; scrollbar-color:var(--orange) rgba(255,255,255,.08); }
+.modal-backdrop { display:grid !important; overflow-y:auto !important; align-items:start; }
+.modal { min-height:0; height:auto; max-height:calc(100vh - 40px) !important; margin:20px auto; overflow-y:auto !important; align-content:start; scrollbar-width:thin; scrollbar-color:var(--orange) rgba(255,255,255,.08); }
 .modal::-webkit-scrollbar { width:12px; }.modal::-webkit-scrollbar-track { background:rgba(255,255,255,.08); border-radius:8px; }.modal::-webkit-scrollbar-thumb { background:var(--orange); border-radius:8px; border:2px solid #1a1f27; }
 .modal { position:relative; width:min(100%,430px); display:grid; gap:14px; padding:28px; border:1px solid rgba(255,109,26,.3); border-radius:18px; background:#1a1f27; box-shadow:0 25px 80px rgba(0,0,0,.45); }
 .modal h2 { margin-bottom:3px; }.modal label { display:grid; gap:6px; color:#c9cfd8; font-size:13px; font-weight:600; }.modal input, .modal select { width:100%; border:1px solid var(--line); border-radius:9px; padding:11px 12px; outline:0; background:#11151b; color:var(--text); }.modal input:focus, .modal select:focus { border-color:var(--orange); }.modal-close { position:absolute; top:12px; right:14px; border:0; background:none; color:var(--muted); font-size:25px; cursor:pointer; }.modal-submit { width:100%; border:0; border-radius:10px; padding:12px; font-weight:700; cursor:pointer; }
