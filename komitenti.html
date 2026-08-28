@@ -21,12 +21,12 @@
     </aside>
 
     <main class="main-content">
-      <header class="app-header"><div><p class="overline">Baza podataka</p><h1>Komitenti</h1></div><button class="primary-action" id="new-client-button">+ Novi komitent</button></header>
+      <header class="app-header"><div><p class="overline">Baza podataka</p><h1>Komitenti</h1></div><div class="page-actions"><button class="primary-action" id="new-client-button">+ Novi komitent</button><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div></header>
       <section class="panel module-intro"><p>Ovde čuvate podatke svojih komitenata. Kada ih jednom unesete, biraćete ih iz liste prilikom kreiranja računa.</p><span>Podaci se čuvaju bezbedno u bazi vašeg preduzeća.</span></section>
       <section class="panel clients-module"><div class="panel-heading"><div><p class="overline">Evidencija</p><h2>Svi komitenti</h2></div><span class="record-count" id="record-count">0 komitenata</span></div><div class="table-wrap"><table><thead><tr><th>Naziv</th><th>PIB</th><th>MB</th><th>Adresa</th><th>Email za slanje faktura</th><th>Radnje</th></tr></thead><tbody id="komitent-list"><tr><td colspan="6" class="empty-state">Još nema unetih komitenata.</td></tr></tbody></table></div></section>
     </main>
   </div>
   <div class="modal-backdrop" id="modal" hidden><form class="modal" id="komitent-form"><button class="modal-close" type="button" aria-label="Zatvori">×</button><p class="overline">Novi unos</p><h2 id="form-title">Novi komitent</h2><label>Naziv komitenta<input name="name" required placeholder="Naziv komitenta"></label><label>PIB<input name="pib" inputmode="numeric" placeholder="PIB"></label><label>MB<input name="mb" inputmode="numeric" placeholder="Matični broj"></label><label>Adresa<input name="address" placeholder="Adresa komitenta"></label><label>Email za slanje faktura<input name="email" type="email" placeholder="email@firma.rs"></label><button class="primary-action modal-submit" type="submit">Sačuvaj komitenta</button></form></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="komitenti.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="logout.js"></script><script src="komitenti.js?v=3"></script>
 </body>
 </html>

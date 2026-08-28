@@ -21,12 +21,12 @@
     </aside>
 
     <main class="main-content">
-      <header class="app-header"><div><p class="overline">Finansije</p><h1>Računi</h1></div><a class="primary-action" href="poslovanje.html?return=racuni#novi-racun">+ Novi račun</a></header>
+      <header class="app-header"><div><p class="overline">Finansije</p><h1>Računi</h1></div><div class="page-actions"><a class="primary-action" href="poslovanje.html?return=racuni#novi-racun">+ Novi račun</a><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div></header>
       <section class="panel module-intro"><p>Pregled izdatih računa i njihovih stavki na jednom mestu.</p><span>Ovo su interni nacrti računa. Fiskalizacija i e-fakture se povezuju u posebnom koraku.</span></section>
       <section class="panel invoice-module"><div class="invoice-toolbar"><div><p class="overline">Evidencija</p><h2>Svi računi</h2></div><label class="filter-label">Status<select id="status-filter"><option value="all">Svi statusi</option><option value="paid">Plaćeni</option><option value="pending">Čekaju uplatu</option></select></label></div><div class="table-wrap"><table><thead><tr><th>Broj</th><th>Komitent</th><th>Datum</th><th>Stavke</th><th>Iznos</th><th>Status</th></tr></thead><tbody id="invoice-module-list"><tr><td colspan="6" class="empty-state">Još nema unetih računa.</td></tr></tbody></table></div></section>
       <section class="panel invoice-detail" id="invoice-detail" hidden><div class="panel-heading"><div><p class="overline">Detalji računa</p><h2 id="detail-title">Izaberite račun</h2></div><button class="table-action" id="close-detail">Zatvori</button></div><div id="detail-content"></div></section>
     </main>
   </div>
-  <script src="racuni.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="logout.js"></script><script src="racuni.js?v=3"></script>
 </body>
 </html>
