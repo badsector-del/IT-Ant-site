@@ -54,14 +54,14 @@ async function loadCompanySettings() {
   taxNote.textContent = vatEnabled ? 'Preduzeće je u PDV sistemu. Iznosi stavki su bez PDV-a.' : 'Za ovaj poreski režim račun se izdaje bez PDV-a.';
   itemList.querySelectorAll('.item-vat').forEach(select => {
     select.disabled = !vatEnabled;
-    select.hidden = !vatEnabled;
+    select.classList.toggle('vat-visible', vatEnabled);
     if (!vatEnabled) select.value = '20';
   });
 }
 
 const formatRsd = value => `${Number(value).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
-const returnTo = new URLSearchParams(window.location.search).get('return');
+const returnTo = new URLSearchParams(window.location.search).get('return') || (document.referrer.includes('racuni.html') ? 'racuni' : '');
 const closeModal = () => {
   modal.hidden = true;
   if (returnTo === 'racuni') window.location.href = 'racuni.html';
@@ -75,7 +75,7 @@ const openModal = type => {
   expenseFields.hidden = type !== 'expense';
   invoiceItems.hidden = type !== 'invoice';
   vatFields.hidden = type !== 'invoice' || companySettings?.tax_regime !== 'books_vat';
-  itemList.querySelectorAll('.item-vat').forEach(select => { select.hidden = companySettings?.tax_regime !== 'books_vat'; });
+  itemList.querySelectorAll('.item-vat').forEach(select => { select.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat'); });
   clientSelect.required = type === 'invoice';
   form.amount.required = type !== 'invoice';
   form.reset();
@@ -91,7 +91,7 @@ modal.addEventListener('click', event => { if (event.target === modal) closeModa
 addItemButton.addEventListener('click', () => {
   itemList.insertAdjacentHTML('beforeend', '<div class="item-row new-entry"><input class="item-description" placeholder="" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="1" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" placeholder="0" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20">20% - Opšta</option><option value="10">10% - Posebna</option><option value="exempt_right">Oslobođeno sa pravom</option><option value="exempt_no">Oslobođeno bez prava</option></select></div>');
   const newVatSelect = itemList.lastElementChild.querySelector('.item-vat');
-  newVatSelect.hidden = companySettings?.tax_regime !== 'books_vat';
+  newVatSelect.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat');
   newVatSelect.disabled = newVatSelect.hidden;
   itemList.lastElementChild.querySelector('.item-description').focus();
 });
@@ -197,7 +197,7 @@ async function loadEditInvoice(id) {
   await populateClients(); await loadCompanySettings();
   clientSelect.value = invoice.client_id; form.status.value = invoice.status; resetItems();
   itemList.innerHTML = invoice.invoice_items.map(item => { const vatValue = item.vat_treatment === 'exempt_right' || item.vat_treatment === 'exempt_no' ? item.vat_treatment : String(item.vat_rate ?? 20); return `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20" ${vatValue === '20' ? 'selected' : ''}>20% - Opšta</option><option value="10" ${vatValue === '10' ? 'selected' : ''}>10% - Posebna</option><option value="exempt_right" ${vatValue === 'exempt_right' ? 'selected' : ''}>Oslobođeno sa pravom</option><option value="exempt_no" ${vatValue === 'exempt_no' ? 'selected' : ''}>Oslobođeno bez prava</option></select></div>`; }).join('');
-  itemList.querySelectorAll('.item-vat').forEach(select => { select.disabled = companySettings?.tax_regime !== 'books_vat'; select.hidden = companySettings?.tax_regime !== 'books_vat'; });
+  itemList.querySelectorAll('.item-vat').forEach(select => { select.disabled = companySettings?.tax_regime !== 'books_vat'; select.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat'); });
   modalTitle.textContent = 'Izmeni račun';
 };
 const editId = new URLSearchParams(window.location.search).get('edit');
