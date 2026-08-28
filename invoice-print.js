@@ -19,6 +19,9 @@ async function load() {
   const companyDetails = document.querySelector('.company-details');
   companyDetails?.querySelector('p:nth-child(2)')?.remove();
   companyDetails?.insertAdjacentHTML('beforeend', `<p>Tekući račun: ${esc(company.bank_account || '—')}</p>`);
+  const invoiceData = document.querySelector('.invoice-data');
+  invoiceData?.querySelector('.party-label')?.remove();
+  invoiceData?.querySelector('p')?.classList.add('invoice-number');
   const originalSheet = document.querySelector('.sheet');
   const originalHeader = originalSheet.querySelector('.invoice-head');
   const originalParties = originalSheet.querySelector('.parties');
