@@ -24,5 +24,8 @@ table { width:100%; border-collapse:collapse; }.items th { padding:9px 7px; back
 .parties .recipient { justify-self:end; width:100%; text-align:right; }
 .items th:nth-child(2), .items th:nth-child(3), .items td:nth-child(2), .items td:nth-child(3) { text-align:center; }
 .items th:last-child { text-align:right; }
-@media print { body { background:#fff; }.toolbar { display:none; } #invoice-page,.sheet { width:auto; min-height:0; margin:0; padding:0; }.sheet { padding:0 0 28mm; } .invoice-head { break-inside:avoid; } .items thead { display:table-header-group; } .footer { position:fixed; left:0; right:0; bottom:0; margin:0; padding:8px 0 0; background:#fff; } }
+@media print { body { background:#fff; }.toolbar { display:none; } #invoice-page { width:auto; margin:0; padding:0; } .page-sheet { width:auto; min-height:267mm !important; margin:0; padding:16mm 14mm 38mm !important; break-after:page; page-break-after:always; box-sizing:border-box; } .page-sheet:last-child { break-after:auto; page-break-after:auto; } .invoice-head { break-inside:avoid; } .items thead { display:table-header-group; } .page-sheet .footer { position:absolute; left:14mm; right:14mm; bottom:10mm; margin:0; } }
+.page-sheet { break-after:page; page-break-after:always; }
+.page-sheet:last-child { break-after:auto; page-break-after:auto; }
+.continuation-title { margin:0 0 22px; color:#536071; font-size:13px; font-weight:700; }
 @media screen and (max-width:800px) { #invoice-page { width:100%; margin:0; }.sheet { padding:28px 20px; }.invoice-head,.parties { display:block; }.invoice-title { margin-top:20px; text-align:left; }.totals { width:100%; } }
