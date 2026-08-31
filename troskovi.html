@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Troškovi | IT ANT Poslovanje</title>
+  <link rel="stylesheet" href="poslovanje.css?v=18">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="poslovanje.html"><img src="Logo-Transparent.png" alt="IT ANT"><span>Poslovanje</span></a>
+      <nav class="side-nav" aria-label="Glavna navigacija aplikacije">
+        <a href="poslovanje.html"><span>⌂</span> Pregled</a>
+        <a href="komitenti.html"><span>◉</span> Komitenti</a>
+        <a href="racuni.html"><span>▣</span> Računi</a>
+        <a class="active" href="troskovi.html"><span>↗</span> Troškovi</a>
+        <a href="poslovanje.html#rokovi"><span>◷</span> Rokovi</a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot"></span> Sve je ažurno</div>
+    </aside>
+    <main class="main-content">
+      <header class="app-header">
+        <div><p class="overline">Finansije</p><h1>Troškovi</h1><p class="active-company"><span>Preduzeće:</span> <strong data-company-name>Učitavanje...</strong></p></div>
+        <div class="header-actions"><div class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></div><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div>
+      </header>
+      <div class="page-actions expense-page-actions"><p class="module-copy">Evidencija ulaznih računa i drugih poslovnih troškova.</p><button class="primary-action" id="new-expense">+ Novi trošak</button></div>
+      <section class="panel">
+        <div class="panel-heading"><div><p class="overline">Evidencija</p><h2>Svi troškovi</h2></div><span class="record-count" id="expense-count">0 troškova</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Dobavljač</th><th>Broj računa</th><th>Datum</th><th>Opis</th><th>Iznos</th><th>PDV</th><th>Status</th><th>Radnje</th></tr></thead><tbody id="expense-list"><tr><td colspan="8" class="empty-state">Učitavanje...</td></tr></tbody></table></div>
+      </section>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="expense-modal" hidden><form class="modal" id="expense-form"><button class="modal-close" type="button" aria-label="Zatvori">×</button><p class="overline">Brzi unos</p><h2 id="expense-title">Novi trošak</h2><label>Dobavljač<input name="supplier" required placeholder="Naziv dobavljača"></label><label>Broj ulazne fakture<input name="invoice_number" placeholder="Broj dokumenta dobavljača"></label><label>Datum računa<input name="expense_date" type="date" required></label><label>Opis<input name="description" placeholder="Na šta se odnosi trošak"></label><div class="expense-amount-grid"><label>Osnovica<input name="subtotal" type="number" min="0" step="0.01" required placeholder="0,00"></label><label id="expense-vat-label">PDV stopa<select name="vat_rate" id="expense-vat-rate"><option value="20">20% - Opšta</option><option value="10">10% - Posebna</option><option value="0">0% - Bez PDV-a</option></select></label></div><p class="tax-note" id="expense-tax-note"></p><label>Ukupno<input name="amount" id="expense-total" type="number" min="0" step="0.01" required placeholder="0,00"></label><label>Status<select name="status"><option value="paid">Plaćen</option><option value="pending">Čeka plaćanje</option></select></label><button class="primary-action modal-submit" type="submit">Sačuvaj trošak</button></form></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="app-context.js"></script><script src="logout.js?v=2"></script><script src="troskovi.js?v=1"></script>
+</body>
+</html>
