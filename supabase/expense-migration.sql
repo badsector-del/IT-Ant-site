@@ -26,3 +26,20 @@ do $$ begin
   alter table public.expenses add constraint expenses_vat_rate_check check (vat_rate in (0, 10, 20));
 exception when duplicate_object then null;
 end $$;
+
+create table if not exists public.expense_items (
+  id uuid primary key default gen_random_uuid(),
+  expense_id uuid not null references public.expenses(id) on delete cascade,
+  description text not null,
+  quantity numeric(12,2) not null check (quantity > 0),
+  unit_price numeric(14,2) not null check (unit_price >= 0),
+  vat_rate numeric(5,2) not null default 0 check (vat_rate in (0, 10, 20)),
+  vat_amount numeric(14,2) not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.expense_items enable row level security;
+drop policy if exists "Members manage company expense items" on public.expense_items;
+create policy "Members manage company expense items" on public.expense_items
+for all using (exists (select 1 from public.expenses where expenses.id = expense_items.expense_id and expenses.company_id = public.user_company_id()))
+with check (exists (select 1 from public.expenses where expenses.id = expense_items.expense_id and expenses.company_id = public.user_company_id()));

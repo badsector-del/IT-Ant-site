@@ -51,6 +51,7 @@ h1 { margin-top:5px; font-size:30px; letter-spacing:-.04em; } h2 { margin-top:2p
 .invoice-actions { display:flex; gap:8px; margin:-6px 0 16px; }
 .expense-page-actions { justify-content:space-between; margin:28px 0 18px; }.module-copy { color:var(--muted); font-size:13px; }.expense-amount-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.expense-amount-grid label[hidden] { display:none; }
 .date-picker > [data-date-display] { width:100%; cursor:pointer; }
+.expense-items { display:grid; gap:8px; }.expense-items-heading, .expense-item-row { display:grid; grid-template-columns:minmax(0,1fr) 70px 95px 88px 30px; gap:6px; align-items:center; }.expense-items-heading { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }.expense-item-row input, .expense-item-row select { width:100%; min-width:0; border:1px solid var(--line); border-radius:8px; padding:9px 8px; background:#11151b; color:var(--text); }.remove-expense-item { width:30px; height:30px; border:0; border-radius:7px; background:rgba(255,255,255,.06); color:var(--muted); cursor:pointer; font-size:18px; }.expense-item-vat[hidden] { display:none; }
 .item-vat { display:none !important; }
 .item-vat.vat-visible { display:block !important; }
 @media (max-width:900px) { .sidebar { width:195px; }.main-content { padding:28px 24px 45px; }.content-grid { grid-template-columns:1fr; } }
