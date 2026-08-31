@@ -7,6 +7,32 @@ const vatRate = document.querySelector('#expense-vat-rate');
 const taxNote = document.querySelector('#expense-tax-note');
 const totalInput = document.querySelector('#expense-total');
 const supplierSelect = document.querySelector('#supplier-select');
+const expenseDateInput = form.expense_date;
+const expenseDateLabel = expenseDateInput.closest('label');
+const expenseDatePicker = document.createElement('div');
+expenseDatePicker.className = 'date-picker';
+expenseDatePicker.innerHTML = '<input type="text" data-date-display placeholder="dd.MM.yyyy" readonly><div class="date-calendar" hidden></div>';
+expenseDateInput.type = 'hidden';
+expenseDatePicker.append(expenseDateInput);
+expenseDateLabel.append(expenseDatePicker);
+const expenseDateDisplay = expenseDatePicker.querySelector('[data-date-display]');
+const expenseCalendar = expenseDatePicker.querySelector('.date-calendar');
+const monthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+const pad = value => String(value).padStart(2, '0');
+const displayDate = value => value ? `${value.slice(8, 10)}.${value.slice(5, 7)}.${value.slice(0, 4)}` : '';
+let calendarDate = new Date();
+function renderCalendar() {
+  const first = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+  const days = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+  const start = (first.getDay() + 6) % 7;
+  const cells = Array.from({ length: start }, () => '<span></span>');
+  for (let day = 1; day <= days; day += 1) { const iso = `${calendarDate.getFullYear()}-${pad(calendarDate.getMonth() + 1)}-${pad(day)}`; cells.push(`<button type="button" class="calendar-day ${iso === expenseDateInput.value ? 'selected' : ''}" data-expense-date="${iso}">${day}</button>`); }
+  expenseCalendar.innerHTML = `<div class="calendar-head"><button type="button" data-calendar-prev>‹</button><strong>${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}</strong><button type="button" data-calendar-next>›</button></div><div class="calendar-week"><span>Po</span><span>Ut</span><span>Sr</span><span>Če</span><span>Pe</span><span>Su</span><span>Ne</span></div><div class="calendar-grid">${cells.join('')}</div>`;
+}
+function setExpenseDate(value) { expenseDateInput.value = value || ''; expenseDateDisplay.value = displayDate(value); if (value) calendarDate = new Date(`${value}T12:00:00`); renderCalendar(); }
+expenseDateDisplay.addEventListener('click', () => { expenseCalendar.hidden = !expenseCalendar.hidden; renderCalendar(); });
+expenseCalendar.addEventListener('click', event => { const day = event.target.closest('[data-expense-date]'); if (day) { setExpenseDate(day.dataset.expenseDate); expenseCalendar.hidden = true; } if (event.target.closest('[data-calendar-prev]')) { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); } if (event.target.closest('[data-calendar-next]')) { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); } });
+document.addEventListener('click', event => { if (!expenseDatePicker.contains(event.target)) expenseCalendar.hidden = true; });
 let companyId = null;
 let taxRegime = 'pausal';
 let editingId = null;
@@ -45,7 +71,7 @@ async function loadExpenses() {
 function openModal(expense = null) {
   editingId = expense?.id || null;
   form.reset();
-  form.expense_date.value = expense?.expense_date || today();
+  setExpenseDate(expense?.expense_date || today());
   loadSuppliers(expense?.supplier_id || '');
   form.invoice_number.value = expense?.invoice_number || '';
   form.description.value = expense?.description || '';
