@@ -8,6 +8,7 @@ const taxNote = document.querySelector('#expense-tax-note');
 const totalInput = document.querySelector('#expense-total');
 const supplierSelect = document.querySelector('#supplier-select');
 const expenseDateInput = form.expense_date;
+expenseDateInput.type = 'text';
 const expenseDateLabel = expenseDateInput.closest('label');
 const expenseDatePicker = document.createElement('div');
 expenseDatePicker.className = 'date-picker';
