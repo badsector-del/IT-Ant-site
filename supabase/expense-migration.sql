@@ -1,10 +1,18 @@
 -- Run once after the multitenant migration.
 alter table public.expenses add column if not exists supplier text;
+alter table public.expenses add column if not exists supplier_id uuid references public.clients(id);
 alter table public.expenses add column if not exists invoice_number text;
 alter table public.expenses add column if not exists subtotal numeric(14,2);
 alter table public.expenses add column if not exists vat_rate numeric(5,2) not null default 0;
 alter table public.expenses add column if not exists vat_amount numeric(14,2) not null default 0;
 alter table public.expenses add column if not exists status text not null default 'paid';
+
+update public.expenses e
+set supplier_id = c.id
+from public.clients c
+where e.supplier_id is null
+  and e.company_id = c.company_id
+  and e.supplier = c.name;
 
 update public.expenses set subtotal = amount where subtotal is null;
 alter table public.expenses alter column subtotal set not null;
