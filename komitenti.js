@@ -11,7 +11,8 @@ let companyId = null;
 const initials = name => name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
 
 async function loadClients() {
-  const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').limit(1).single();
+  await window.itAntContextReady;
+  const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').eq('company_id', window.itAntActiveCompanyId).single();
   if (membershipError) { list.innerHTML = `<tr><td colspan="6" class="empty-state">Korisnik nije povezan sa preduzećem.</td></tr>`; return; }
   companyId = membership.company_id;
   const { data, error } = await db.from('clients').select('*').order('created_at', { ascending: true });

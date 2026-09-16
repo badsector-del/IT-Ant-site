@@ -47,7 +47,8 @@ async function populateClients() {
 }
 
 async function loadCompanySettings() {
-  const { data } = await db.from('company_users').select('company_id,companies(tax_regime,vat_number)').limit(1).single();
+  await window.itAntContextReady;
+  const { data } = await db.from('company_users').select('company_id,companies(tax_regime,vat_number)').eq('company_id', window.itAntActiveCompanyId).single();
   companySettings = data?.companies || { tax_regime: 'pausal' };
   const vatEnabled = companySettings.tax_regime === 'books_vat';
   vatFields.hidden = !vatEnabled;
@@ -120,7 +121,8 @@ form.addEventListener('submit', async event => {
     data.amount = data.subtotal + data.vat_amount;
   }
   if (entryType === 'invoice') {
-    const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').limit(1).single();
+    await window.itAntContextReady;
+    const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').eq('company_id', window.itAntActiveCompanyId).single();
     if (membershipError) { alert('Korisnik nije povezan sa preduzećem.'); return; }
     const invoicePayload = { company_id: membership.company_id, client_id: data.client, status: data.status, total: data.amount, subtotal: data.subtotal, vat_rate: data.vat_rate, vat_amount: data.vat_amount, tax_regime: companySettings?.tax_regime || 'pausal', notes: null, updated_at: new Date().toISOString() };
     if (editingInvoiceId) {

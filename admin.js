@@ -47,15 +47,19 @@ list.addEventListener('click', async event => {
 
 function renderUsers(data) {
   const userList = document.querySelector('#admin-user-list');
-  const users = data.memberships || [];
-  const companyOptions = (data.companies || []).map(company => `<option value="${company.id}">${company.name}</option>`).join('');
-  userList.innerHTML = users.length ? users.map(member => `<tr><td>${member.email || member.user_id}</td><td><select class="user-company" data-user-id="${member.user_id}">${companyOptions}</select></td><td><input class="user-password" data-user-id="${member.user_id}" type="password" minlength="8" placeholder="Nova lozinka"></td><td><button class="table-action move-user" data-user-id="${member.user_id}" type="button">Promeni</button><button class="table-action reset-user" data-user-id="${member.user_id}" type="button">Resetuj</button><button class="table-action danger delete-user" data-user-id="${member.user_id}" type="button">Obriši</button></td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema korisničkih naloga.</td></tr>';
-  users.forEach(member => { const select = userList.querySelector(`select[data-user-id="${member.user_id}"]`); if (select) select.value = member.company_id; });
+  const memberships = data.memberships || [];
+  const users = [...new Map(memberships.map(member => [member.user_id, member])).values()];
+  const companyOptions = data.companies || [];
+  userList.innerHTML = users.length ? users.map(member => {
+    const assigned = new Set(memberships.filter(item => item.user_id === member.user_id).map(item => item.company_id));
+    const options = companyOptions.map(company => `<option value="${company.id}" ${assigned.has(company.id) ? 'selected' : ''}>${company.name}</option>`).join('');
+    return `<tr><td><div class="user-name-fields"><input class="user-name" data-field="first_name" data-user-id="${member.user_id}" value="${member.first_name || ''}" placeholder="Ime"><input class="user-name" data-field="last_name" data-user-id="${member.user_id}" value="${member.last_name || ''}" placeholder="Prezime"></div></td><td>${member.email || member.user_id}</td><td><select class="user-company" data-user-id="${member.user_id}" multiple>${options}</select></td><td><input class="user-password" data-user-id="${member.user_id}" type="password" minlength="8" placeholder="Nova lozinka"></td><td><button class="table-action save-user" data-user-id="${member.user_id}" type="button">Sačuvaj</button><button class="table-action save-companies" data-user-id="${member.user_id}" type="button">Preduzeća</button><button class="table-action reset-user" data-user-id="${member.user_id}" type="button">Resetuj</button><button class="table-action danger delete-user" data-user-id="${member.user_id}" type="button">Obriši</button></td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty-state">Još nema korisničkih naloga.</td></tr>';
 }
 
 function renderLogs(logs = []) {
   const logList = document.querySelector('#admin-log-list');
-  logList.innerHTML = logs.length ? logs.map(log => `<tr><td>${formatDate(log.created_at)}</td><td>${log.admin_email || 'Administrator'}</td><td>${log.action === 'create_company' ? 'Kreirano preduzeće' : log.action === 'update_company' ? 'Izmenjeno preduzeće' : log.action === 'delete_company' ? 'Obrisano preduzeće' : log.action === 'reset_password' ? 'Resetovana lozinka' : log.action === 'move_user' ? 'Promenjeno preduzeće korisnika' : log.action === 'delete_user' ? 'Obrisan korisnički nalog' : 'Kreiran korisnički nalog'}</td><td>${log.details?.name || log.details?.email || '—'}</td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema administratorskih radnji.</td></tr>';
+  logList.innerHTML = logs.length ? logs.map(log => `<tr><td>${formatDate(log.created_at)}</td><td>${log.admin_email || 'Administrator'}</td><td>${log.action === 'create_company' ? 'Kreirano preduzeće' : log.action === 'update_company' ? 'Izmenjeno preduzeće' : log.action === 'delete_company' ? 'Obrisano preduzeće' : log.action === 'reset_password' ? 'Resetovana lozinka' : log.action === 'update_user' ? 'Izmenjeni podaci korisnika' : log.action === 'update_user_companies' ? 'Izmenjena preduzeća korisnika' : log.action === 'move_user' ? 'Promenjeno preduzeće korisnika' : log.action === 'delete_user' ? 'Obrisan korisnički nalog' : 'Kreiran korisnički nalog'}</td><td>${log.details?.name || log.details?.email || '—'}</td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">Još nema administratorskih radnji.</td></tr>';
 }
 
 async function load() { try { const data = await callAdmin('list'); window.adminData = data; render(data); renderUsers(data); renderLogs(data.logs); } catch (error) { list.innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; setMessage('Nemate administratorski pristup ili funkcija nije objavljena.', true); } }
@@ -67,9 +71,15 @@ document.querySelector('#admin-user-list').addEventListener('click', async event
     if (button.classList.contains('delete-user')) {
       if (!confirm('Obrisati ovaj korisnički nalog? Povezani podaci mogu biti obrisani zajedno sa nalogom.')) return;
       await callAdmin('delete-user', { user_id: userId }); setMessage('Korisnički nalog je obrisan.'); await load();
-    } else if (button.classList.contains('move-user')) {
-      const companyId = document.querySelector(`select[data-user-id="${userId}"]`).value;
-      await callAdmin('move-user', { user_id: userId, company_id: companyId }); setMessage('Korisnik je prebačen u izabrano preduzeće.'); await load();
+    } else if (button.classList.contains('save-user')) {
+      const firstName = document.querySelector(`input[data-user-id="${userId}"][data-field="first_name"]`).value.trim();
+      const lastName = document.querySelector(`input[data-user-id="${userId}"][data-field="last_name"]`).value.trim();
+      if (!firstName || !lastName) { setMessage('Ime i prezime su obavezni.', true); return; }
+      await callAdmin('update-user', { user_id: userId, first_name: firstName, last_name: lastName }); setMessage('Podaci korisnika su sačuvani.'); await load();
+    } else if (button.classList.contains('save-companies')) {
+      const companyIds = [...document.querySelector(`select[data-user-id="${userId}"]`).selectedOptions].map(option => option.value);
+      if (!companyIds.length) { setMessage('Korisnik mora imati najmanje jedno preduzeće.', true); return; }
+      await callAdmin('update-user-companies', { user_id: userId, company_ids: companyIds }); setMessage('Preduzeća korisnika su sačuvana.'); await load();
     } else {
       const passwordInput = document.querySelector(`input[data-user-id="${userId}"]`);
       if (!passwordInput.value) { setMessage('Unesi novu lozinku za resetovanje.', true); return; }

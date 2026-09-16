@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Komitenti | IT ANT Poslovanje</title>
-  <link rel="stylesheet" href="poslovanje.css?v=5">
+  <link rel="stylesheet" href="poslovanje.css?v=17">
 </head>
 <body>
   <div class="app-shell">
@@ -21,7 +21,8 @@
     </aside>
 
     <main class="main-content">
-      <header class="app-header"><div><p class="overline">Baza podataka</p><h1>Komitenti</h1><p class="active-company"><span>Preduzeće:</span> <strong data-company-name>Učitavanje...</strong></p></div><div class="page-actions"><div class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></div><button class="primary-action" id="new-client-button">+ Novi komitent</button><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div></header>
+      <header class="app-header"><div><p class="overline">Baza podataka</p><h1>Komitenti</h1><p class="active-company"><span>Preduzeće:</span> <strong data-company-name>Učitavanje...</strong></p></div><div class="page-actions"><details class="user-menu"><summary><span class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></span><span class="user-menu-chevron" aria-hidden="true">⌄</span></summary><div class="user-menu-panel"><p class="user-menu-label">Nalog</p><strong data-user-name>Korisnik</strong><small data-user-email>Učitavanje...</small><span class="user-menu-divider"></span><label class="user-menu-label" for="company-switch">Aktivno preduzeće</label><select id="company-switch" class="user-company-switch" data-company-switch><option>Učitavanje...</option></select><button class="user-menu-logout logout-button" data-logout type="button">Odjavi se</button></div></details></div></header>
+      <div class="page-actions module-page-actions"><button class="primary-action" id="new-client-button">+ Novi komitent</button></div>
       <section class="panel module-intro"><p>Ovde čuvate podatke svojih komitenata. Kada ih jednom unesete, biraćete ih iz liste prilikom kreiranja računa.</p><span>Podaci se čuvaju bezbedno u bazi vašeg preduzeća.</span></section>
       <section class="panel clients-module"><div class="panel-heading"><div><p class="overline">Evidencija</p><h2>Svi komitenti</h2></div><span class="record-count" id="record-count">0 komitenata</span></div><div class="table-wrap"><table><thead><tr><th>Naziv</th><th>PIB</th><th>MB</th><th>Adresa</th><th>Email za slanje faktura</th><th>Radnje</th></tr></thead><tbody id="komitent-list"><tr><td colspan="6" class="empty-state">Još nema unetih komitenata.</td></tr></tbody></table></div></section>
     </main>

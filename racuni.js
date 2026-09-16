@@ -22,7 +22,8 @@ async function migrateLocalInvoices() {
   if (!local.length) { localStorage.setItem('it-ant-invoices-migrated', '1'); return; }
   const { data: clients, error: clientsError } = await db.from('clients').select('id,name');
   if (clientsError) throw clientsError;
-  const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').limit(1).single();
+  await window.itAntContextReady;
+  const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').eq('company_id', window.itAntActiveCompanyId).single();
   if (membershipError) throw membershipError;
   const clientByName = new Map(clients.map(client => [client.name, client.id]));
   for (const entry of [...local].reverse()) {
