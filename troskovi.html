@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Troškovi | IT ANT Poslovanje</title>
-  <link rel="stylesheet" href="poslovanje.css?v=19">
+  <link rel="stylesheet" href="poslovanje.css?v=20">
 </head>
 <body>
   <div class="app-shell">
@@ -22,7 +22,7 @@
     <main class="main-content">
       <header class="app-header">
         <div><p class="overline">Finansije</p><h1>Troškovi</h1><p class="active-company"><span>Preduzeće:</span> <strong data-company-name>Učitavanje...</strong></p></div>
-        <div class="header-actions"><div class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></div><button class="secondary-action logout-button" data-logout type="button">Odjavi se</button></div>
+        <div class="header-actions"><details class="user-menu"><summary><span class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></span><span class="user-menu-chevron" aria-hidden="true">⌄</span></summary><div class="user-menu-panel"><p class="user-menu-label">Nalog</p><strong data-user-name>Korisnik</strong><small data-user-email>Učitavanje...</small><span class="user-menu-divider"></span><label class="user-menu-label" for="company-switch">Aktivno preduzeće</label><select id="company-switch" class="user-company-switch" data-company-switch><option>Učitavanje...</option></select><button class="user-menu-logout logout-button" data-logout type="button">Odjavi se</button></div></details></div>
       </header>
       <div class="page-actions expense-page-actions"><p class="module-copy">Evidencija ulaznih računa i drugih poslovnih troškova.</p><button class="primary-action" id="new-expense">+ Novi trošak</button></div>
       <section class="panel">

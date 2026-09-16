@@ -57,7 +57,8 @@ const date = value => { const d = new Date(`${value}T00:00:00`); return `${Strin
 const escapeHtml = value => String(value || '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
 const today = () => new Date().toISOString().slice(0, 10);
 async function loadCompany() {
-  const { data, error } = await db.from('company_users').select('company_id,companies(name,tax_regime)').limit(1).single();
+  await window.itAntContextReady;
+  const { data, error } = await db.from('company_users').select('company_id,companies(name,tax_regime)').eq('company_id', window.itAntActiveCompanyId).single();
   if (error) throw error;
   companyId = data.company_id;
   taxRegime = data.companies?.tax_regime || 'pausal';
