@@ -34,7 +34,8 @@ function renderClients() {
   list.innerHTML = clients.length ? clients.map(client => `<tr><td><strong><span class="table-avatar">${initials(client.name)}</span>${client.name}</strong></td><td>${client.pib || '—'}</td><td>${client.mb || '—'}</td><td>${client.address || '—'}</td><td>${client.invoice_email || '—'}</td><td class="row-actions"><button class="table-action" data-edit="${client.id}">Izmeni</button><button class="table-action danger" data-delete="${client.id}">Obriši</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">Još nema unetih komitenata.</td></tr>';
 }
 
-document.querySelector('#new-client-button').addEventListener('click', () => { editingId = null; formTitle.textContent = 'Novi komitent'; modal.hidden = false; form.reset(); form.name.focus(); });
+function openNewClientModal() { editingId = null; formTitle.textContent = 'Novi komitent'; modal.hidden = false; form.reset(); form.name.focus(); }
+document.querySelector('#new-client-button').addEventListener('click', openNewClientModal);
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
 list.addEventListener('click', async event => {
@@ -60,4 +61,6 @@ form.addEventListener('submit', async event => {
   if (editingId) clients = clients.map(client => client.id === editingId ? result.data : client); else clients.push(result.data);
   renderClients(); modal.hidden = true;
 });
-loadClients();
+loadClients().then(() => {
+  if (companyId && new URLSearchParams(window.location.search).get('new') === '1') openNewClientModal();
+});
