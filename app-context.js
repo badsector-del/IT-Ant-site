@@ -1,6 +1,5 @@
-const db = window.itAntSupabase;
-
 window.itAntContextReady = (async () => {
+  const db = window.itAntSupabase;
   const { data: { user } } = await db.auth.getUser();
   if (!user) return null;
   const { data: memberships, error } = await db.from('company_users').select('company_id,role,companies(name)').order('created_at');
