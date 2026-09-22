@@ -75,6 +75,7 @@ function readItems() {
 }
 
 function setOfferDates(issue = today(), valid = plusDays(issue, 15)) {
+  if (typeof window.setDatePickerValue !== 'function') return;
   window.setDatePickerValue('offer_issue_date', issue);
   window.setDatePickerValue('offer_valid_until', valid);
 }
@@ -93,13 +94,13 @@ function updateCustomTerm(selectId, customId) {
 }
 
 function openModal() {
+  modal.hidden = false;
   form.reset();
   setOfferDates();
   resetItems();
   updateCustomTerm('offer-payment-terms', 'offer-payment-custom');
   updateCustomTerm('offer-delivery-terms', 'offer-delivery-custom');
   loadClients();
-  modal.hidden = false;
   document.querySelector('#offer-client').focus();
 }
 
