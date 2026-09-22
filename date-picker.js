@@ -20,11 +20,11 @@ document.querySelectorAll('[data-date-picker]').forEach(picker => {
   const setValue = iso => { hidden.value = iso; display.value = toDisplayDate(iso); calendar.hidden = true; render(); };
   display.addEventListener('click', () => { calendar.hidden = !calendar.hidden; render(); });
   display.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); calendar.hidden = !calendar.hidden; render(); } });
-  calendar.addEventListener('click', event => { const day = event.target.closest('[data-date]'); if (day) setValue(day.dataset.date); if (event.target.closest('[data-calendar-prev]')) { viewDate.setMonth(viewDate.getMonth() - 1); render(); } if (event.target.closest('[data-calendar-next]')) { viewDate.setMonth(viewDate.getMonth() + 1); render(); } });
+  calendar.addEventListener('click', event => { event.stopPropagation(); const day = event.target.closest('[data-date]'); if (day) { setValue(day.dataset.date); return; } if (event.target.closest('[data-calendar-prev]')) { viewDate.setMonth(viewDate.getMonth() - 1); render(); } else if (event.target.closest('[data-calendar-next]')) { viewDate.setMonth(viewDate.getMonth() + 1); render(); } });
   picker.append(calendar);
   display.value = toDisplayDate(hidden.value);
 });
 
-window.setDatePickerValue = (name, value) => { const picker = document.querySelector(`[data-date-picker="${name}"]`); if (!picker) return; const display = picker.querySelector('[data-date-display]'); const hidden = picker.querySelector('[data-date-value]'); hidden.value = value || ''; display.value = toDisplayDate(value); };
+window.setDatePickerValue = (name, value) => { const picker = document.querySelector(`[data-date-picker="${name}"]`); if (!picker) return; const display = picker.querySelector('[data-date-display']); const hidden = picker.querySelector('[data-date-value]'); hidden.value = value || ''; display.value = toDisplayDate(value); const calendar = picker.querySelector('.date-calendar'); if (calendar) calendar.hidden = true; };
 
-document.addEventListener('click', event => { document.querySelectorAll('.date-calendar').forEach(calendar => { if (!calendar.parentElement.contains(event.target)) calendar.hidden = true; }); });
+document.addEventListener('click', event => { if (event.target.closest('.date-picker')) return; document.querySelectorAll('.date-calendar').forEach(calendar => { calendar.hidden = true; }); });

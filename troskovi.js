@@ -47,7 +47,7 @@ function renderCalendar() {
 }
 function setExpenseDate(value) { expenseDateInput.value = value || ''; expenseDateDisplay.value = displayDate(value); if (value) calendarDate = new Date(`${value}T12:00:00`); renderCalendar(); }
 expenseDateDisplay.addEventListener('click', () => { expenseCalendar.hidden = !expenseCalendar.hidden; renderCalendar(); });
-expenseCalendar.addEventListener('click', event => { const day = event.target.closest('[data-expense-date]'); if (day) { setExpenseDate(day.dataset.expenseDate); expenseCalendar.hidden = true; } if (event.target.closest('[data-calendar-prev]')) { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); } if (event.target.closest('[data-calendar-next]')) { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); } });
+expenseCalendar.addEventListener('click', event => { event.stopPropagation(); const day = event.target.closest('[data-expense-date]'); if (day) { setExpenseDate(day.dataset.expenseDate); expenseCalendar.hidden = true; return; } if (event.target.closest('[data-calendar-prev]')) { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); } else if (event.target.closest('[data-calendar-next]')) { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); } });
 document.addEventListener('click', event => { if (!expenseDatePicker.contains(event.target)) expenseCalendar.hidden = true; });
 let companyId = null;
 let taxRegime = 'pausal';
