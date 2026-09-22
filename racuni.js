@@ -9,6 +9,19 @@ const formatDate = value => { const date = new Date(value); return `${String(dat
 document.querySelector('a[href*="poslovanje.html"][href*="novi-racun"]')?.addEventListener('click', () => sessionStorage.setItem('it-ant-invoice-return', 'racuni'));
 let invoices = [];
 let openInvoiceId = null;
+const invoiceSort = { key: 'createdAt', direction: 'desc' };
+const invoiceSortValue = (invoice, key) => key === 'items' ? (invoice.items?.length || 0) : invoice[key];
+function sortInvoices(rows) {
+  return [...rows].sort((a, b) => {
+    const left = invoiceSortValue(a, invoiceSort.key);
+    const right = invoiceSortValue(b, invoiceSort.key);
+    const comparison = typeof left === 'number' && typeof right === 'number' ? left - right : String(left ?? '').localeCompare(String(right ?? ''), 'sr');
+    return invoiceSort.direction === 'asc' ? comparison : -comparison;
+  });
+}
+function updateInvoiceSortIndicators() {
+  document.querySelectorAll('.invoice-module th[data-sort]').forEach(header => header.dataset.direction = header.dataset.sort === invoiceSort.key ? invoiceSort.direction : '');
+}
 
 async function getRemoteInvoices() {
   const { data, error } = await db.from('invoices').select('id,number,status,total,subtotal,vat_rate,vat_amount,tax_regime,issue_date,notes,clients(name),invoice_items(description,quantity,unit_price,line_total,vat_rate,vat_treatment,vat_amount)').order('issue_date', { ascending: false });
@@ -40,9 +53,10 @@ async function migrateLocalInvoices() {
 }
 
 function renderInvoices() {
-  const visible = invoices.filter(invoice => filter.value === 'all' || invoice.status === filter.value);
+  const visible = sortInvoices(invoices.filter(invoice => filter.value === 'all' || invoice.status === filter.value));
   list.innerHTML = visible.length ? visible.map(invoice => `<tr><td><strong>${invoice.number}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${invoice.items?.length || 0}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">Nema računa za izabrani status.</td></tr>';
   list.querySelectorAll('tr').forEach((row, index) => row.addEventListener('click', () => { const invoice = visible[index]; if (invoice && openInvoiceId === invoice.id && !detail.hidden) { detail.hidden = true; openInvoiceId = null; } else if (invoice) showDetail(invoice); }));
+  updateInvoiceSortIndicators();
 }
 
 function showDetail(invoice) {
@@ -78,5 +92,10 @@ async function load() {
 }
 
 filter.addEventListener('change', renderInvoices);
+document.querySelectorAll('.invoice-module th[data-sort]').forEach(header => header.addEventListener('click', () => {
+  if (invoiceSort.key === header.dataset.sort) invoiceSort.direction = invoiceSort.direction === 'asc' ? 'desc' : 'asc';
+  else { invoiceSort.key = header.dataset.sort; invoiceSort.direction = 'asc'; }
+  renderInvoices();
+}));
 document.querySelector('#close-detail').addEventListener('click', () => { detail.hidden = true; openInvoiceId = null; });
 load();
