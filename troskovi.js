@@ -52,6 +52,21 @@ document.addEventListener('click', event => { if (!expenseDatePicker.contains(ev
 let companyId = null;
 let taxRegime = 'pausal';
 let editingId = null;
+let expenses = [];
+const expenseSort = { key: 'expense_date', direction: 'desc' };
+const expenseSortValue = (expense, key) => expense[key];
+function sortExpenses(rows) {
+  return [...rows].sort((a, b) => {
+    const left = expenseSortValue(a, expenseSort.key);
+    const right = expenseSortValue(b, expenseSort.key);
+    const numeric = ['amount', 'vat_rate'].includes(expenseSort.key);
+    const comparison = numeric ? Number(left || 0) - Number(right || 0) : String(left ?? '').localeCompare(String(right ?? ''), 'sr');
+    return expenseSort.direction === 'asc' ? comparison : -comparison;
+  });
+}
+function updateExpenseSortIndicators() {
+  document.querySelectorAll('section.panel th[data-sort]').forEach(header => header.dataset.direction = header.dataset.sort === expenseSort.key ? expenseSort.direction : '');
+}
 const money = value => `${Number(value || 0).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const date = value => { const d = new Date(`${value}T00:00:00`); return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`; };
 const escapeHtml = value => String(value || '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
@@ -81,11 +96,17 @@ function calculateTotal() {
   const vat = items.reduce((sum, item) => sum + item.vat_amount, 0);
   totalInput.value = (subtotal + vat).toFixed(2);
 }
+function renderExpenses() {
+  const rows = sortExpenses(expenses);
+  list.innerHTML = rows.length ? rows.map(item => `<tr><td>${escapeHtml(item.supplier)}</td><td>${escapeHtml(item.invoice_number || '—')}</td><td>${date(item.expense_date)}</td><td>${escapeHtml(item.description || '—')}</td><td>${money(item.amount)}</td><td>${Number(item.vat_rate || 0) ? `${Number(item.vat_rate)}%` : '—'}</td><td><span class="badge ${item.status === 'paid' ? 'paid' : 'pending'}">${item.status === 'paid' ? 'Plaćen' : 'Čeka plaćanje'}</span></td><td><div class="row-actions"><button class="table-action edit-expense" data-id="${item.id}" type="button">Izmeni</button><button class="table-action danger delete-expense" data-id="${item.id}" type="button">Obriši</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-state">Još nema unetih troškova.</td></tr>';
+  updateExpenseSortIndicators();
+}
 async function loadExpenses() {
   const { data, error } = await db.from('expenses').select('id,supplier,supplier_id,invoice_number,expense_date,description,amount,subtotal,vat_rate,vat_amount,status').order('expense_date', { ascending: false });
   if (error) { list.innerHTML = `<tr><td colspan="8" class="empty-state">Troškovi nisu dostupni: ${escapeHtml(error.message)}</td></tr>`; return; }
   document.querySelector('#expense-count').textContent = `${data.length} ${data.length === 1 ? 'trošak' : 'troškova'}`;
-  list.innerHTML = data.length ? data.map(item => `<tr><td>${escapeHtml(item.supplier)}</td><td>${escapeHtml(item.invoice_number || '—')}</td><td>${date(item.expense_date)}</td><td>${escapeHtml(item.description || '—')}</td><td>${money(item.amount)}</td><td>${Number(item.vat_rate || 0) ? `${Number(item.vat_rate)}%` : '—'}</td><td><span class="badge ${item.status === 'paid' ? 'paid' : 'pending'}">${item.status === 'paid' ? 'Plaćen' : 'Čeka plaćanje'}</span></td><td><div class="row-actions"><button class="table-action edit-expense" data-id="${item.id}" type="button">Izmeni</button><button class="table-action danger delete-expense" data-id="${item.id}" type="button">Obriši</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-state">Još nema unetih troškova.</td></tr>';
+  expenses = data || [];
+  renderExpenses();
 }
 function openModal(expense = null) {
   editingId = expense?.id || null;
@@ -108,6 +129,11 @@ document.querySelector('#add-expense-item').addEventListener('click', addExpense
 expenseItemList.addEventListener('click', event => { if (event.target.classList.contains('remove-expense-item') && expenseItemList.children.length > 1) event.target.closest('.expense-item-row').remove(); calculateTotal(); });
 expenseItemList.addEventListener('input', calculateTotal);
 document.querySelector('#new-expense').addEventListener('click', () => openModal());
+document.querySelectorAll('section.panel th[data-sort]').forEach(header => header.addEventListener('click', () => {
+  if (expenseSort.key === header.dataset.sort) expenseSort.direction = expenseSort.direction === 'asc' ? 'desc' : 'asc';
+  else { expenseSort.key = header.dataset.sort; expenseSort.direction = 'asc'; }
+  renderExpenses();
+}));
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
 form.subtotal.addEventListener('input', calculateTotal);
