@@ -88,6 +88,11 @@ function renderOffers() {
   const selected = statusFilter.value;
   const visible = offers.filter(offer => selected === 'all' || offer.status === selected);
   list.innerHTML = visible.length ? visible.map(offer => `<tr data-offer-id="${offer.id}"><td><strong>${escapeHtml(offer.number)}</strong></td><td>${escapeHtml(offer.clients?.name || '—')}</td><td>${date(offer.issue_date)}</td><td>${date(offer.valid_until)}</td><td>${offer.offer_items?.length || 0}</td><td>${money(offer.total)}</td><td><span class="badge ${statusClass(offer.status)}">${statusLabel(offer.status)}</span></td><td><div class="row-actions"><button class="table-action print-offer" data-id="${offer.id}" type="button">PDF</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-state">Nema ponuda za izabrani status.</td></tr>';
+  list.querySelectorAll('tr[data-offer-id]').forEach(row => row.addEventListener('click', event => {
+    if (event.target.closest('.print-offer')) return;
+    const offer = visible.find(item => item.id === row.dataset.offerId);
+    if (offer) showDetail(offer);
+  }));
 }
 
 function showDetail(offer) {
@@ -150,12 +155,7 @@ itemList.addEventListener('click', event => { if (event.target.classList.contain
 statusFilter.addEventListener('change', renderOffers);
 list.addEventListener('click', event => {
   const printButton = event.target.closest('.print-offer');
-  const row = event.target.closest('tr[data-offer-id]');
-  const id = printButton?.dataset.id || row?.dataset.offerId;
-  const offer = offers.find(item => item.id === id);
-  if (!offer) return;
-  if (printButton) window.open(`ponuda-print.html?id=${offer.id}`, '_blank', 'noopener');
-  else showDetail(offer);
+  if (printButton) window.open(`ponuda-print.html?id=${printButton.dataset.id}`, '_blank', 'noopener');
 });
 document.querySelector('#close-offer-detail').addEventListener('click', () => { detail.hidden = true; });
 
