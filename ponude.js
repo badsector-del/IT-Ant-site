@@ -60,10 +60,25 @@ function setOfferDates(issue = today(), valid = plusDays(issue, 15)) {
   window.setDatePickerValue('offer_valid_until', valid);
 }
 
+function selectedTerm(selectId, customId) {
+  const select = document.querySelector(`#${selectId}`);
+  return select.value === 'custom' ? document.querySelector(`#${customId}`).value.trim() : select.value.trim();
+}
+
+function updateCustomTerm(selectId, customId) {
+  const select = document.querySelector(`#${selectId}`);
+  const custom = document.querySelector(`#${customId}`);
+  custom.hidden = select.value !== 'custom';
+  custom.required = select.value === 'custom';
+  if (custom.hidden) custom.value = '';
+}
+
 function openModal() {
   form.reset();
   setOfferDates();
   resetItems();
+  updateCustomTerm('offer-payment-terms', 'offer-payment-custom');
+  updateCustomTerm('offer-delivery-terms', 'offer-delivery-custom');
   loadClients();
   modal.hidden = false;
   document.querySelector('#offer-client').focus();
@@ -119,6 +134,8 @@ async function loadOffers() {
 document.querySelector('#new-offer').addEventListener('click', openModal);
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
+document.querySelector('#offer-payment-terms').addEventListener('change', () => updateCustomTerm('offer-payment-terms', 'offer-payment-custom'));
+document.querySelector('#offer-delivery-terms').addEventListener('change', () => updateCustomTerm('offer-delivery-terms', 'offer-delivery-custom'));
 document.querySelector('#add-offer-item').addEventListener('click', () => { itemList.insertAdjacentHTML('beforeend', itemTemplate()); itemList.lastElementChild.querySelector('.offer-item-description').focus(); });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-offer-item') && itemList.children.length > 1) event.target.closest('.offer-item-row').remove(); });
 statusFilter.addEventListener('change', renderOffers);
@@ -139,7 +156,7 @@ form.addEventListener('submit', async event => {
   const vatAmount = items.reduce((sum, item) => sum + item.vat_amount, 0);
   const { data: number, error: numberError } = await db.rpc('next_offer_number');
   if (numberError) { alert(`Broj ponude nije kreiran: ${numberError.message}`); return; }
-  const { data: offer, error: offerError } = await db.from('offers').insert({ company_id: membership.company_id, client_id: form.client_id.value, number, issue_date: issueDate, valid_until: validUntil, payment_terms: form.payment_terms.value.trim() || null, delivery_terms: form.delivery_terms.value.trim() || null, notes: form.notes.value.trim() || null, subtotal, vat_rate: items.every(item => item.vat_rate === items[0]?.vat_rate) ? (items[0]?.vat_rate || 0) : 0, vat_amount: vatAmount, total: subtotal + vatAmount, tax_regime: taxRegime }).select('id').single();
+  const { data: offer, error: offerError } = await db.from('offers').insert({ company_id: membership.company_id, client_id: form.client_id.value, number, issue_date: issueDate, valid_until: validUntil, payment_terms: selectedTerm('offer-payment-terms', 'offer-payment-custom') || null, delivery_terms: selectedTerm('offer-delivery-terms', 'offer-delivery-custom') || null, notes: form.notes.value.trim() || null, subtotal, vat_rate: items.every(item => item.vat_rate === items[0]?.vat_rate) ? (items[0]?.vat_rate || 0) : 0, vat_amount: vatAmount, total: subtotal + vatAmount, tax_regime: taxRegime }).select('id').single();
   if (offerError) { alert(`Ponuda nije sačuvana: ${offerError.message}`); return; }
   const { error: itemsError } = await db.from('offer_items').insert(items.map(item => ({ offer_id: offer.id, description: item.description, quantity: item.quantity, unit: item.unit, unit_price: item.unit_price, vat_rate: item.vat_rate, vat_treatment: item.vat_treatment, vat_amount: item.vat_amount })));
   if (itemsError) { await db.from('offers').delete().eq('id', offer.id); alert(`Stavke ponude nisu sačuvane: ${itemsError.message}`); return; }
