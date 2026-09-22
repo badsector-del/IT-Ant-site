@@ -53,6 +53,12 @@ let companyId = null;
 let taxRegime = 'pausal';
 let editingId = null;
 let expenses = [];
+const expenseSearch = document.createElement('div');
+expenseSearch.className = 'search-controls';
+expenseSearch.innerHTML = '<label>Pretraži<input type="search" id="expense-search" placeholder="Unesite pojam"></label><label>Po čemu<select id="expense-search-field"><option value="supplier">Dobavljač</option><option value="invoice_number">Broj računa</option><option value="expense_date">Datum</option><option value="description">Opis</option><option value="amount">Iznos</option></select></label>';
+document.querySelector('.panel-heading').append(expenseSearch);
+const expenseSearchInput = document.querySelector('#expense-search');
+const expenseSearchField = document.querySelector('#expense-search-field');
 const expenseSort = { key: 'expense_date', direction: 'desc' };
 const expenseSortValue = (expense, key) => expense[key];
 function sortExpenses(rows) {
@@ -97,7 +103,12 @@ function calculateTotal() {
   totalInput.value = (subtotal + vat).toFixed(2);
 }
 function renderExpenses() {
-  const rows = sortExpenses(expenses);
+  const term = expenseSearchInput.value.trim().toLocaleLowerCase('sr');
+  const field = expenseSearchField.value;
+  const rows = sortExpenses(expenses.filter(expense => {
+    const value = field === 'amount' ? money(expense.amount) : expense[field];
+    return !term || String(value ?? '').toLocaleLowerCase('sr').includes(term);
+  }));
   list.innerHTML = rows.length ? rows.map(item => `<tr><td>${escapeHtml(item.supplier)}</td><td>${escapeHtml(item.invoice_number || '—')}</td><td>${date(item.expense_date)}</td><td>${escapeHtml(item.description || '—')}</td><td>${money(item.amount)}</td><td>${Number(item.vat_rate || 0) ? `${Number(item.vat_rate)}%` : '—'}</td><td><span class="badge ${item.status === 'paid' ? 'paid' : 'pending'}">${item.status === 'paid' ? 'Plaćen' : 'Čeka plaćanje'}</span></td><td><div class="row-actions"><button class="table-action edit-expense" data-id="${item.id}" type="button">Izmeni</button><button class="table-action danger delete-expense" data-id="${item.id}" type="button">Obriši</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-state">Još nema unetih troškova.</td></tr>';
   updateExpenseSortIndicators();
 }
@@ -134,6 +145,8 @@ document.querySelectorAll('section.panel th[data-sort]').forEach(header => heade
   else { expenseSort.key = header.dataset.sort; expenseSort.direction = 'asc'; }
   renderExpenses();
 }));
+expenseSearchInput.addEventListener('input', renderExpenses);
+expenseSearchField.addEventListener('change', renderExpenses);
 document.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
 modal.addEventListener('click', event => { if (event.target === modal) modal.hidden = true; });
 form.subtotal.addEventListener('input', calculateTotal);

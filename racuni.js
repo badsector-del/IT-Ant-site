@@ -9,6 +9,12 @@ const formatDate = value => { const date = new Date(value); return `${String(dat
 document.querySelector('a[href*="poslovanje.html"][href*="novi-racun"]')?.addEventListener('click', () => sessionStorage.setItem('it-ant-invoice-return', 'racuni'));
 let invoices = [];
 let openInvoiceId = null;
+const invoiceSearch = document.createElement('div');
+invoiceSearch.className = 'search-controls';
+invoiceSearch.innerHTML = '<label>Pretraži<input type="search" id="invoice-search" placeholder="Unesite pojam"></label><label>Po čemu<select id="invoice-search-field"><option value="number">Broj računa</option><option value="name">Komitent</option><option value="createdAt">Datum</option><option value="amount">Iznos</option></select></label>';
+document.querySelector('.invoice-toolbar').append(invoiceSearch);
+const invoiceSearchInput = document.querySelector('#invoice-search');
+const invoiceSearchField = document.querySelector('#invoice-search-field');
 const invoiceSort = { key: 'createdAt', direction: 'desc' };
 const invoiceSortValue = (invoice, key) => key === 'items' ? (invoice.items?.length || 0) : invoice[key];
 function sortInvoices(rows) {
@@ -53,7 +59,13 @@ async function migrateLocalInvoices() {
 }
 
 function renderInvoices() {
-  const visible = sortInvoices(invoices.filter(invoice => filter.value === 'all' || invoice.status === filter.value));
+  const term = invoiceSearchInput.value.trim().toLocaleLowerCase('sr');
+  const field = invoiceSearchField.value;
+  const visible = sortInvoices(invoices.filter(invoice => {
+    const statusMatches = filter.value === 'all' || invoice.status === filter.value;
+    const value = field === 'amount' ? formatRsd(invoice.amount) : invoice[field];
+    return statusMatches && (!term || String(value ?? '').toLocaleLowerCase('sr').includes(term));
+  }));
   list.innerHTML = visible.length ? visible.map(invoice => `<tr><td><strong>${invoice.number}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${invoice.items?.length || 0}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">Nema računa za izabrani status.</td></tr>';
   list.querySelectorAll('tr').forEach((row, index) => row.addEventListener('click', () => { const invoice = visible[index]; if (invoice && openInvoiceId === invoice.id && !detail.hidden) { detail.hidden = true; openInvoiceId = null; } else if (invoice) showDetail(invoice); }));
   updateInvoiceSortIndicators();
@@ -92,6 +104,8 @@ async function load() {
 }
 
 filter.addEventListener('change', renderInvoices);
+invoiceSearchInput.addEventListener('input', renderInvoices);
+invoiceSearchField.addEventListener('change', renderInvoices);
 document.querySelectorAll('.invoice-module th[data-sort]').forEach(header => header.addEventListener('click', () => {
   if (invoiceSort.key === header.dataset.sort) invoiceSort.direction = invoiceSort.direction === 'asc' ? 'desc' : 'asc';
   else { invoiceSort.key = header.dataset.sort; invoiceSort.direction = 'asc'; }

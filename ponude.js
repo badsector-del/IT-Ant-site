@@ -10,6 +10,12 @@ const detailContent = document.querySelector('#offer-detail-content');
 let companyId = null;
 let taxRegime = 'pausal';
 let offers = [];
+const offerSearch = document.createElement('div');
+offerSearch.className = 'search-controls';
+offerSearch.innerHTML = '<label>Pretraži<input type="search" id="offer-search" placeholder="Unesite pojam"></label><label>Po čemu<select id="offer-search-field"><option value="number">Broj ponude</option><option value="client">Komitent</option><option value="issue_date">Datum izdavanja</option><option value="valid_until">Važi do</option><option value="total">Iznos</option></select></label>';
+document.querySelector('.invoice-toolbar').append(offerSearch);
+const offerSearchInput = document.querySelector('#offer-search');
+const offerSearchField = document.querySelector('#offer-search-field');
 const offerSort = { key: 'issue_date', direction: 'desc' };
 const offerSortValue = (offer, key) => key === 'client' ? offer.clients?.name : key === 'items' ? (offer.offer_items?.length || 0) : offer[key];
 function sortOffers(rows) {
@@ -99,7 +105,13 @@ function openModal() {
 
 function renderOffers() {
   const selected = statusFilter.value;
-  const visible = sortOffers(offers.filter(offer => selected === 'all' || offer.status === selected));
+  const term = offerSearchInput.value.trim().toLocaleLowerCase('sr');
+  const field = offerSearchField.value;
+  const visible = sortOffers(offers.filter(offer => {
+    const statusMatches = selected === 'all' || offer.status === selected;
+    const value = field === 'client' ? offer.clients?.name : offer[field];
+    return statusMatches && (!term || String(value ?? '').toLocaleLowerCase('sr').includes(term));
+  }));
   list.innerHTML = visible.length ? visible.map(offer => `<tr data-offer-id="${offer.id}"><td><strong>${escapeHtml(offer.number)}</strong></td><td>${escapeHtml(offer.clients?.name || '—')}</td><td>${date(offer.issue_date)}</td><td>${date(offer.valid_until)}</td><td>${offer.offer_items?.length || 0}</td><td>${money(offer.total)}</td><td><span class="badge ${statusClass(offer.status)}">${statusLabel(offer.status)}</span></td><td><div class="row-actions"><button class="table-action print-offer" data-id="${offer.id}" type="button">PDF</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-state">Nema ponuda za izabrani status.</td></tr>';
   updateOfferSortIndicators();
   list.querySelectorAll('tr[data-offer-id]').forEach(row => row.addEventListener('click', event => {
@@ -167,6 +179,8 @@ document.querySelector('#offer-delivery-terms').addEventListener('change', () =>
 document.querySelector('#add-offer-item').addEventListener('click', () => { itemList.insertAdjacentHTML('beforeend', itemTemplate()); itemList.lastElementChild.querySelector('.offer-item-description').focus(); });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-offer-item') && itemList.children.length > 1) event.target.closest('.offer-item-row').remove(); });
 statusFilter.addEventListener('change', renderOffers);
+offerSearchInput.addEventListener('input', renderOffers);
+offerSearchField.addEventListener('change', renderOffers);
 document.querySelectorAll('.invoice-module th[data-sort]').forEach(header => header.addEventListener('click', () => {
   if (offerSort.key === header.dataset.sort) offerSort.direction = offerSort.direction === 'asc' ? 'desc' : 'asc';
   else { offerSort.key = header.dataset.sort; offerSort.direction = 'asc'; }
