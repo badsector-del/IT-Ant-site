@@ -10,10 +10,20 @@ const itemList = document.querySelector('#item-list');
 const addItemButton = document.querySelector('#add-item');
 const vatFields = document.querySelector('#vat-fields');
 const taxNote = document.querySelector('#tax-note');
+const invoiceDates = document.createElement('div');
+invoiceDates.className = 'form-grid-two';
+invoiceDates.innerHTML = '<label>Datum računa<input id="invoice-issue-date" name="issue_date" type="date" required></label><label>Valuta (dana)<input id="invoice-due-days" name="due_days" type="number" min="0" step="1" value="15" required><small id="invoice-due-date-preview" class="tax-note"></small></label>';
+document.querySelector('#client-picker').after(invoiceDates);
+const issueDateInput = document.querySelector('#invoice-issue-date');
+const dueDaysInput = document.querySelector('#invoice-due-days');
+const dueDatePreview = document.querySelector('#invoice-due-date-preview');
 const db = window.itAntSupabase;
 let entryType = 'invoice';
 let companySettings = null;
 let editingInvoiceId = null;
+const isoToday = () => new Date().toISOString().slice(0, 10);
+const formatIsoDate = value => { if (!value) return '—'; const date = new Date(`${value}T00:00:00`); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
+function calculateDueDate() { if (!issueDateInput.value) { dueDatePreview.textContent = ''; return ''; } const dueDate = new Date(`${issueDateInput.value}T12:00:00`); dueDate.setDate(dueDate.getDate() + Math.max(0, Number(dueDaysInput.value || 0))); const iso = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}`; dueDatePreview.textContent = `Datum valute: ${formatIsoDate(iso)}`; return iso; }
 
 const getClients = () => JSON.parse(localStorage.getItem('it-ant-clients') || '[]');
 const makeId = () => window.crypto?.randomUUID?.() || `entry-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -73,6 +83,7 @@ const openModal = type => {
   modalTitle.textContent = type === 'invoice' ? 'Novi račun' : type === 'client' ? 'Novi klijent' : 'Novi trošak';
   statusField.hidden = type !== 'invoice';
   clientPicker.hidden = type !== 'invoice';
+  invoiceDates.hidden = type !== 'invoice';
   expenseFields.hidden = type !== 'expense';
   invoiceItems.hidden = type !== 'invoice';
   if (type === 'invoice') invoiceItems.removeAttribute('hidden');
@@ -81,6 +92,7 @@ const openModal = type => {
   clientSelect.required = type === 'invoice';
   form.amount.required = type !== 'invoice';
   form.reset();
+  if (type === 'invoice') { issueDateInput.value = isoToday(); dueDaysInput.value = '15'; calculateDueDate(); }
   resetItems();
   itemList.querySelectorAll('input').forEach(input => { input.required = type === 'invoice'; });
   if (type === 'invoice') { populateClients(); loadCompanySettings(); }
@@ -88,6 +100,8 @@ const openModal = type => {
 };
 
 document.querySelectorAll('[data-modal]').forEach(button => button.addEventListener('click', () => openModal(button.dataset.modal)));
+issueDateInput.addEventListener('change', calculateDueDate);
+dueDaysInput.addEventListener('input', calculateDueDate);
 document.querySelector('.modal-close').addEventListener('click', closeModal);
 modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
 addItemButton.addEventListener('click', () => {
@@ -124,7 +138,7 @@ form.addEventListener('submit', async event => {
     await window.itAntContextReady;
     const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').eq('company_id', window.itAntActiveCompanyId).single();
     if (membershipError) { alert('Korisnik nije povezan sa preduzećem.'); return; }
-    const invoicePayload = { company_id: membership.company_id, client_id: data.client, status: data.status, total: data.amount, subtotal: data.subtotal, vat_rate: data.vat_rate, vat_amount: data.vat_amount, tax_regime: companySettings?.tax_regime || 'pausal', notes: null, updated_at: new Date().toISOString() };
+    const invoicePayload = { company_id: membership.company_id, client_id: data.client, status: data.status, total: data.amount, subtotal: data.subtotal, vat_rate: data.vat_rate, vat_amount: data.vat_amount, tax_regime: companySettings?.tax_regime || 'pausal', issue_date: data.issue_date || isoToday(), due_date: calculateDueDate(), notes: null, updated_at: new Date().toISOString() };
     if (editingInvoiceId) {
       const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const { data: updated, error: updateError } = await db.from('invoices').update(invoicePayload).eq('id', editingInvoiceId).gt('created_at', cutoff).neq('status', 'cancelled').select('id').maybeSingle();
@@ -194,11 +208,11 @@ async function renderDashboard() {
 renderDashboard();
 if (window.location.hash === '#novi-racun') openModal('invoice');
 async function loadEditInvoice(id) {
-  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,invoice_items(description,quantity,unit_price,vat_rate,vat_treatment)').eq('id', id).single();
+  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,issue_date,due_date,invoice_items(description,quantity,unit_price,vat_rate,vat_treatment)').eq('id', id).single();
   if (error || !invoice) return;
   editingInvoiceId = id; openModal('invoice');
   await populateClients(); await loadCompanySettings();
-  clientSelect.value = invoice.client_id; form.status.value = invoice.status; resetItems();
+  clientSelect.value = invoice.client_id; form.status.value = invoice.status; issueDateInput.value = invoice.issue_date || isoToday(); const daysUntilDue = invoice.due_date ? Math.max(0, Math.round((new Date(`${invoice.due_date}T12:00:00`) - new Date(`${issueDateInput.value}T12:00:00`)) / 86400000)) : 15; dueDaysInput.value = String(daysUntilDue); calculateDueDate(); resetItems();
   itemList.innerHTML = invoice.invoice_items.map(item => { const vatValue = item.vat_treatment === 'exempt_right' || item.vat_treatment === 'exempt_no' ? item.vat_treatment : String(item.vat_rate ?? 20); return `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20" ${vatValue === '20' ? 'selected' : ''}>20% - Opšta</option><option value="10" ${vatValue === '10' ? 'selected' : ''}>10% - Posebna</option><option value="exempt_right" ${vatValue === 'exempt_right' ? 'selected' : ''}>Oslobođeno sa pravom</option><option value="exempt_no" ${vatValue === 'exempt_no' ? 'selected' : ''}>Oslobođeno bez prava</option></select></div>`; }).join('');
   itemList.querySelectorAll('.item-vat').forEach(select => { select.disabled = companySettings?.tax_regime !== 'books_vat'; select.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat'); });
   modalTitle.textContent = 'Izmeni račun';
