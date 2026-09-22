@@ -146,18 +146,35 @@ list.addEventListener('click', async event => {
 });
 form.addEventListener('submit', async event => {
   event.preventDefault();
-  calculateTotal();
-  const items = readExpenseItems();
-  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
-  const vat = items.reduce((sum, item) => sum + item.vat_amount, 0);
-  const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.textContent || '';
-  const payload = { company_id: companyId, supplier_id: supplierSelect.value, supplier: supplierName, invoice_number: form.invoice_number.value.trim() || null, expense_date: form.expense_date.value, description: items.map(item => item.description).filter(Boolean).join(', ') || null, subtotal, vat_rate: items.every(item => item.vat_rate === items[0]?.vat_rate) ? (items[0]?.vat_rate || 0) : 0, vat_amount: vat, amount: subtotal + vat, status: form.status.value };
-  const result = editingId ? await db.from('expenses').update(payload).eq('id', editingId) : await db.from('expenses').insert(payload).select('id').single();
-  if (result.error) { alert(`Trošak nije sačuvan: ${result.error.message}`); return; }
-  const expenseId = editingId || result.data.id;
-  if (editingId) await db.from('expense_items').delete().eq('expense_id', expenseId);
-  const { error: itemsError } = await db.from('expense_items').insert(items.map(item => ({ expense_id: expenseId, description: item.description, quantity: item.quantity, unit_price: item.unit_price, vat_rate: item.vat_rate, vat_amount: item.vat_amount })));
-  if (itemsError) { alert(`Stavke troška nisu sačuvane: ${itemsError.message}`); return; }
-  modal.hidden = true; await loadExpenses();
+  try {
+    await window.itAntContextReady;
+    if (!companyId) { alert('Aktivno preduzeće nije učitano. Osvežite stranicu i pokušajte ponovo.'); return; }
+    const supplierId = supplierSelect.value;
+    if (!supplierId) { alert('Izaberite dobavljača.'); return; }
+    if (!form.expense_date.value) { alert('Izaberite datum računa.'); return; }
+    calculateTotal();
+    const items = readExpenseItems();
+    if (!items.length || items.some(item => !item.description || item.quantity <= 0 || item.unit_price < 0)) {
+      alert('Unesite najmanje jednu ispravnu stavku troška.');
+      return;
+    }
+    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+    const vat = items.reduce((sum, item) => sum + item.vat_amount, 0);
+    const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.textContent || '';
+    const payload = { company_id: companyId, supplier_id: supplierId, supplier: supplierName, invoice_number: form.invoice_number.value.trim() || null, expense_date: form.expense_date.value, description: items.map(item => item.description).filter(Boolean).join(', ') || null, subtotal, vat_rate: items.every(item => item.vat_rate === items[0]?.vat_rate) ? (items[0]?.vat_rate || 0) : 0, vat_amount: vat, amount: subtotal + vat, status: form.status.value };
+    const result = editingId ? await db.from('expenses').update(payload).eq('id', editingId) : await db.from('expenses').insert(payload).select('id').single();
+    if (result.error) { alert(`Trošak nije sačuvan: ${result.error.message}`); return; }
+    const expenseId = editingId || result.data.id;
+    if (editingId) {
+      const { error: deleteError } = await db.from('expense_items').delete().eq('expense_id', expenseId);
+      if (deleteError) { alert(`Stare stavke troška nisu obrisane: ${deleteError.message}`); return; }
+    }
+    const { error: itemsError } = await db.from('expense_items').insert(items.map(item => ({ expense_id: expenseId, description: item.description, quantity: item.quantity, unit_price: item.unit_price, vat_rate: item.vat_rate, vat_amount: item.vat_amount })));
+    if (itemsError) { alert(`Stavke troška nisu sačuvane: ${itemsError.message}`); return; }
+    modal.hidden = true;
+    await loadExpenses();
+  } catch (error) {
+    alert(`Trošak nije sačuvan: ${error?.message || error}`);
+  }
 });
 (async () => { try { await loadCompany(); await loadSuppliers(); await loadExpenses(); if (new URLSearchParams(window.location.search).get('new') === '1') openModal(); } catch (error) { list.innerHTML = `<tr><td colspan="8" class="empty-state">Podaci nisu dostupni.</td></tr>`; } })();
