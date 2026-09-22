@@ -99,24 +99,33 @@ function showDetail(offer) {
   document.querySelector('#accept-offer')?.addEventListener('click', () => acceptOffer(offer));
 }
 
-async function acceptOffer(offer) {
-  if (!confirm(`Prihvatiti ponudu ${offer.number} i kreirati račun?`)) return;
+async function acceptOffer(offer, askForConfirmation = true) {
+  if (askForConfirmation && !confirm(`Prihvatiti ponudu ${offer.number} i kreirati račun?`)) return false;
   const { data: number, error: numberError } = await db.rpc('next_invoice_number');
-  if (numberError) { alert(`Broj računa nije kreiran: ${numberError.message}`); return; }
+  if (numberError) { alert(`Broj računa nije kreiran: ${numberError.message}`); return false; }
   const issueDate = today();
   const { data: invoice, error: invoiceError } = await db.from('invoices').insert({ company_id: companyId, client_id: offer.client_id, number, status: 'pending', issue_date: issueDate, due_date: plusDays(issueDate, 15), total: offer.total, subtotal: offer.subtotal, vat_rate: offer.vat_rate || 0, vat_amount: offer.vat_amount || 0, tax_regime: offer.tax_regime || taxRegime, notes: offer.notes || null }).select('id').single();
-  if (invoiceError) { alert(`Račun nije kreiran: ${invoiceError.message}`); return; }
+  if (invoiceError) { alert(`Račun nije kreiran: ${invoiceError.message}`); return false; }
   const { error: itemsError } = await db.from('invoice_items').insert((offer.offer_items || []).map(item => ({ invoice_id: invoice.id, description: item.description, quantity: item.quantity, unit_price: item.unit_price, vat_rate: item.vat_rate, vat_treatment: item.vat_treatment, vat_amount: item.vat_amount })));
-  if (itemsError) { await db.from('invoices').delete().eq('id', invoice.id); alert(`Stavke računa nisu sačuvane: ${itemsError.message}`); return; }
+  if (itemsError) { await db.from('invoices').delete().eq('id', invoice.id); alert(`Stavke računa nisu sačuvane: ${itemsError.message}`); return false; }
   const { error: offerError } = await db.from('offers').update({ status: 'accepted', invoice_id: invoice.id, updated_at: new Date().toISOString() }).eq('id', offer.id);
-  if (offerError) { alert(`Ponuda nije označena kao prihvaćena: ${offerError.message}`); return; }
+  if (offerError) { alert(`Ponuda nije označena kao prihvaćena: ${offerError.message}`); return false; }
   alert(`Kreiran je račun ${number}.`);
   await loadOffers();
   const refreshed = offers.find(item => item.id === offer.id);
   if (refreshed) showDetail(refreshed);
+  return true;
 }
 
 async function updateStatus(offer, status) {
+  if (status === 'accepted' && offer.status !== 'accepted') {
+    const createInvoice = confirm(`Ponuda ${offer.number} je prihvaćena. Želite li da kreirate fakturu iz ponude?`);
+    if (createInvoice) {
+      const created = await acceptOffer(offer, false);
+      if (!created) showDetail(offer);
+      return;
+    }
+  }
   const { error } = await db.from('offers').update({ status, updated_at: new Date().toISOString() }).eq('id', offer.id);
   if (error) { alert(`Status ponude nije promenjen: ${error.message}`); return; }
   offer.status = status;
