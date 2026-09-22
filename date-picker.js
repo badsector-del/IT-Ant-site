@@ -2,10 +2,12 @@ const monthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', '
 const pad = value => String(value).padStart(2, '0');
 const toDisplayDate = value => { if (!value) return ''; const [year, month, day] = value.split('-'); return `${day}.${month}.${year}`; };
 const toIsoDate = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+window.setDatePickerValue = (name, value) => { const picker = document.querySelector(`[data-date-picker="${name}"]`); if (!picker) return; const display = picker.querySelector('[data-date-display]'); const hidden = picker.querySelector('[data-date-value]'); if (!display || !hidden) return; hidden.value = value || ''; display.value = toDisplayDate(value); const calendar = picker.querySelector('.date-calendar'); if (calendar) calendar.hidden = true; };
 
 document.querySelectorAll('[data-date-picker]').forEach(picker => {
   const display = picker.querySelector('[data-date-display]');
   const hidden = picker.querySelector('[data-date-value]');
+  if (!display || !hidden) return;
   const calendar = document.createElement('div'); calendar.className = 'date-calendar'; calendar.hidden = true;
   let viewDate = hidden.value ? new Date(`${hidden.value}T12:00:00`) : new Date();
   const render = () => {
