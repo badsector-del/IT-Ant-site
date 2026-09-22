@@ -148,7 +148,15 @@ document.querySelector('#offer-delivery-terms').addEventListener('change', () =>
 document.querySelector('#add-offer-item').addEventListener('click', () => { itemList.insertAdjacentHTML('beforeend', itemTemplate()); itemList.lastElementChild.querySelector('.offer-item-description').focus(); });
 itemList.addEventListener('click', event => { if (event.target.classList.contains('remove-offer-item') && itemList.children.length > 1) event.target.closest('.offer-item-row').remove(); });
 statusFilter.addEventListener('change', renderOffers);
-list.addEventListener('click', event => { const id = event.target.dataset.id; const offer = offers.find(item => item.id === id); if (!offer) return; if (event.target.classList.contains('print-offer')) window.open(`ponuda-print.html?id=${offer.id}`, '_blank', 'noopener'); else showDetail(offer); });
+list.addEventListener('click', event => {
+  const printButton = event.target.closest('.print-offer');
+  const row = event.target.closest('tr[data-offer-id]');
+  const id = printButton?.dataset.id || row?.dataset.offerId;
+  const offer = offers.find(item => item.id === id);
+  if (!offer) return;
+  if (printButton) window.open(`ponuda-print.html?id=${offer.id}`, '_blank', 'noopener');
+  else showDetail(offer);
+});
 document.querySelector('#close-offer-detail').addEventListener('click', () => { detail.hidden = true; });
 
 form.addEventListener('submit', async event => {
