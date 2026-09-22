@@ -12,11 +12,23 @@ const vatFields = document.querySelector('#vat-fields');
 const taxNote = document.querySelector('#tax-note');
 const invoiceDates = document.createElement('div');
 invoiceDates.className = 'form-grid-two';
-invoiceDates.innerHTML = '<label>Datum računa<input id="invoice-issue-date" name="issue_date" type="date" required></label><label>Valuta (dana)<input id="invoice-due-days" name="due_days" type="number" min="0" step="1" value="15" required><small id="invoice-due-date-preview" class="tax-note"></small></label>';
+invoiceDates.innerHTML = '<label>Datum računa<div class="date-picker" id="invoice-date-picker"><input type="text" data-date-display placeholder="dd.MM.yyyy" readonly><div class="date-calendar" hidden></div><input type="hidden" id="invoice-issue-date" name="issue_date"></div></label><label>Valuta (dana)<input id="invoice-due-days" name="due_days" type="number" min="0" step="1" value="15" required><small id="invoice-due-date-preview" class="tax-note"></small></label>';
 document.querySelector('#client-picker').after(invoiceDates);
 const issueDateInput = document.querySelector('#invoice-issue-date');
 const dueDaysInput = document.querySelector('#invoice-due-days');
 const dueDatePreview = document.querySelector('#invoice-due-date-preview');
+const invoiceDatePicker = document.querySelector('#invoice-date-picker');
+const invoiceDateDisplay = invoiceDatePicker.querySelector('[data-date-display]');
+const invoiceCalendar = invoiceDatePicker.querySelector('.date-calendar');
+const invoiceMonthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+let invoiceCalendarDate = new Date();
+const invoicePad = value => String(value).padStart(2, '0');
+const invoiceDisplayDate = value => value ? `${value.slice(8, 10)}.${value.slice(5, 7)}.${value.slice(0, 4)}` : '';
+function renderInvoiceCalendar() { const first = new Date(invoiceCalendarDate.getFullYear(), invoiceCalendarDate.getMonth(), 1); const days = new Date(invoiceCalendarDate.getFullYear(), invoiceCalendarDate.getMonth() + 1, 0).getDate(); const start = (first.getDay() + 6) % 7; const cells = Array.from({ length: start }, () => '<span></span>'); for (let day = 1; day <= days; day += 1) { const iso = `${invoiceCalendarDate.getFullYear()}-${invoicePad(invoiceCalendarDate.getMonth() + 1)}-${invoicePad(day)}`; cells.push(`<button type="button" class="calendar-day ${iso === issueDateInput.value ? 'selected' : ''}" data-invoice-date="${iso}">${day}</button>`); } invoiceCalendar.innerHTML = `<div class="calendar-head"><button type="button" data-invoice-calendar-prev>‹</button><strong>${invoiceMonthNames[invoiceCalendarDate.getMonth()]} ${invoiceCalendarDate.getFullYear()}</strong><button type="button" data-invoice-calendar-next>›</button></div><div class="calendar-week"><span>Po</span><span>Ut</span><span>Sr</span><span>Če</span><span>Pe</span><span>Su</span><span>Ne</span></div><div class="calendar-grid">${cells.join('')}</div>`; }
+function setInvoiceDate(value) { issueDateInput.value = value || ''; invoiceDateDisplay.value = invoiceDisplayDate(value); if (value) invoiceCalendarDate = new Date(`${value}T12:00:00`); renderInvoiceCalendar(); }
+invoiceDateDisplay.addEventListener('click', () => { invoiceCalendar.hidden = !invoiceCalendar.hidden; renderInvoiceCalendar(); });
+invoiceCalendar.addEventListener('click', event => { event.stopPropagation(); const day = event.target.closest('[data-invoice-date]'); if (day) { setInvoiceDate(day.dataset.invoiceDate); calculateDueDate(); invoiceCalendar.hidden = true; return; } if (event.target.closest('[data-invoice-calendar-prev]')) { invoiceCalendarDate.setMonth(invoiceCalendarDate.getMonth() - 1); renderInvoiceCalendar(); } else if (event.target.closest('[data-invoice-calendar-next]')) { invoiceCalendarDate.setMonth(invoiceCalendarDate.getMonth() + 1); renderInvoiceCalendar(); } });
+document.addEventListener('click', event => { if (!invoiceDatePicker.contains(event.target)) invoiceCalendar.hidden = true; });
 const db = window.itAntSupabase;
 let entryType = 'invoice';
 let companySettings = null;
@@ -92,7 +104,7 @@ const openModal = type => {
   clientSelect.required = type === 'invoice';
   form.amount.required = type !== 'invoice';
   form.reset();
-  if (type === 'invoice') { issueDateInput.value = isoToday(); dueDaysInput.value = '15'; calculateDueDate(); }
+  if (type === 'invoice') { setInvoiceDate(isoToday()); dueDaysInput.value = '15'; calculateDueDate(); }
   resetItems();
   itemList.querySelectorAll('input').forEach(input => { input.required = type === 'invoice'; });
   if (type === 'invoice') { populateClients(); loadCompanySettings(); }
@@ -212,7 +224,7 @@ async function loadEditInvoice(id) {
   if (error || !invoice) return;
   editingInvoiceId = id; openModal('invoice');
   await populateClients(); await loadCompanySettings();
-  clientSelect.value = invoice.client_id; form.status.value = invoice.status; issueDateInput.value = invoice.issue_date || isoToday(); const daysUntilDue = invoice.due_date ? Math.max(0, Math.round((new Date(`${invoice.due_date}T12:00:00`) - new Date(`${issueDateInput.value}T12:00:00`)) / 86400000)) : 15; dueDaysInput.value = String(daysUntilDue); calculateDueDate(); resetItems();
+  clientSelect.value = invoice.client_id; form.status.value = invoice.status; setInvoiceDate(invoice.issue_date || isoToday()); const daysUntilDue = invoice.due_date ? Math.max(0, Math.round((new Date(`${invoice.due_date}T12:00:00`) - new Date(`${issueDateInput.value}T12:00:00`)) / 86400000)) : 15; dueDaysInput.value = String(daysUntilDue); calculateDueDate(); resetItems();
   itemList.innerHTML = invoice.invoice_items.map(item => { const vatValue = item.vat_treatment === 'exempt_right' || item.vat_treatment === 'exempt_no' ? item.vat_treatment : String(item.vat_rate ?? 20); return `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20" ${vatValue === '20' ? 'selected' : ''}>20% - Opšta</option><option value="10" ${vatValue === '10' ? 'selected' : ''}>10% - Posebna</option><option value="exempt_right" ${vatValue === 'exempt_right' ? 'selected' : ''}>Oslobođeno sa pravom</option><option value="exempt_no" ${vatValue === 'exempt_no' ? 'selected' : ''}>Oslobođeno bez prava</option></select></div>`; }).join('');
   itemList.querySelectorAll('.item-vat').forEach(select => { select.disabled = companySettings?.tax_regime !== 'books_vat'; select.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat'); });
   modalTitle.textContent = 'Izmeni račun';
