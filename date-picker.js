@@ -20,7 +20,7 @@ document.querySelectorAll('[data-date-picker]').forEach(picker => {
     calendar.innerHTML = `<div class="calendar-head"><button type="button" data-calendar-prev aria-label="Prethodni mesec">‹</button><strong>${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}</strong><button type="button" data-calendar-next aria-label="Sledeći mesec">›</button></div><div class="calendar-week"><span>Po</span><span>Ut</span><span>Sr</span><span>Če</span><span>Pe</span><span>Su</span><span>Ne</span></div><div class="calendar-grid">${cells.join('')}</div>`;
   };
   const setValue = iso => { hidden.value = iso; display.value = toDisplayDate(iso); calendar.hidden = true; render(); };
-  display.addEventListener('click', () => { calendar.hidden = !calendar.hidden; render(); });
+  display.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); calendar.hidden = !calendar.hidden; render(); });
   display.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); calendar.hidden = !calendar.hidden; render(); } });
   calendar.addEventListener('click', event => { event.stopPropagation(); const day = event.target.closest('[data-date]'); if (day) { setValue(day.dataset.date); return; } if (event.target.closest('[data-calendar-prev]')) { viewDate.setMonth(viewDate.getMonth() - 1); render(); } else if (event.target.closest('[data-calendar-next]')) { viewDate.setMonth(viewDate.getMonth() + 1); render(); } });
   picker.append(calendar);
