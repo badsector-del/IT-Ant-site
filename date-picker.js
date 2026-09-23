@@ -1,4 +1,4 @@
-const monthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+const datePickerMonthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
 const pad = value => String(value).padStart(2, '0');
 const toDisplayDate = value => { if (!value) return ''; const [year, month, day] = value.split('-'); return `${day}.${month}.${year}`; };
 const toIsoDate = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -23,7 +23,7 @@ function initializeDatePickers() {
         const iso = toIsoDate(date);
         cells.push(`<button type="button" class="calendar-day ${iso === hidden.value ? 'selected' : ''}" data-date="${iso}">${day}</button>`);
       }
-      calendar.innerHTML = `<div class="calendar-head"><button type="button" data-calendar-prev aria-label="Prethodni mesec">‹</button><strong>${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}</strong><button type="button" data-calendar-next aria-label="Sledeći mesec">›</button></div><div class="calendar-week"><span>Po</span><span>Ut</span><span>Sr</span><span>Če</span><span>Pe</span><span>Su</span><span>Ne</span></div><div class="calendar-grid">${cells.join('')}</div>`;
+      calendar.innerHTML = `<div class="calendar-head"><button type="button" data-calendar-prev aria-label="Prethodni mesec">‹</button><strong>${datePickerMonthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}</strong><button type="button" data-calendar-next aria-label="Sledeći mesec">›</button></div><div class="calendar-week"><span>Po</span><span>Ut</span><span>Sr</span><span>Če</span><span>Pe</span><span>Su</span><span>Ne</span></div><div class="calendar-grid">${cells.join('')}</div>`;
     };
     const setValue = iso => { hidden.value = iso; display.value = toDisplayDate(iso); calendar.hidden = true; render(); };
     display.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); calendar.hidden = !calendar.hidden; render(); });
