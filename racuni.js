@@ -6,6 +6,8 @@ const detailTitle = document.querySelector('#detail-title');
 const detailContent = document.querySelector('#detail-content');
 const formatRsd = value => `${Number(value || 0).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`;
 const formatDate = value => { const date = new Date(value); return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`; };
+const statusLabel = status => status === 'paid' ? 'Plaćen' : status === 'cancelled' ? 'Storniran' : 'Čeka uplatu';
+const statusClass = status => status === 'paid' ? 'paid' : status === 'cancelled' ? 'cancelled' : 'pending';
 document.querySelector('a[href*="poslovanje.html"][href*="novi-racun"]')?.addEventListener('click', () => sessionStorage.setItem('it-ant-invoice-return', 'racuni'));
 let invoices = [];
 let openInvoiceId = null;
@@ -66,7 +68,7 @@ function renderInvoices() {
     const value = field === 'amount' ? formatRsd(invoice.amount) : invoice[field];
     return statusMatches && (!term || String(value ?? '').toLocaleLowerCase('sr').includes(term));
   }));
-  list.innerHTML = visible.length ? visible.map(invoice => `<tr><td><strong>${invoice.number}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${invoice.items?.length || 0}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${invoice.status === 'paid' ? 'paid' : 'pending'}">${invoice.status === 'paid' ? 'Plaćen' : 'Čeka uplatu'}</span></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">Nema računa za izabrani status.</td></tr>';
+  list.innerHTML = visible.length ? visible.map(invoice => `<tr><td><strong>${invoice.number}</strong></td><td>${invoice.name}</td><td>${formatDate(invoice.createdAt)}</td><td>${invoice.items?.length || 0}</td><td>${formatRsd(invoice.amount)}</td><td><span class="badge ${statusClass(invoice.status)}">${statusLabel(invoice.status)}</span></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">Nema računa za izabrani status.</td></tr>';
   list.querySelectorAll('tr').forEach((row, index) => row.addEventListener('click', () => { const invoice = visible[index]; if (invoice && openInvoiceId === invoice.id && !detail.hidden) { detail.hidden = true; openInvoiceId = null; } else if (invoice) showDetail(invoice); }));
   updateInvoiceSortIndicators();
 }
