@@ -75,6 +75,7 @@ function readItems() {
 }
 
 function setOfferDates(issue = today(), valid = plusDays(issue, 15)) {
+  window.initializeDatePickers?.();
   if (typeof window.setDatePickerValue !== 'function') return;
   window.setDatePickerValue('offer_issue_date', issue);
   window.setDatePickerValue('offer_valid_until', valid);
