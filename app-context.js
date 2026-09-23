@@ -9,7 +9,7 @@ window.itAntContextReady = (async () => {
   const active = memberships.find(item => item.company_id === metadataId) || memberships.find(item => item.company_id === savedId) || memberships[0];
   window.itAntActiveCompanyId = active.company_id;
   sessionStorage.setItem('it-ant-active-company', active.company_id);
-  document.querySelectorAll('[data-kpo-nav]').forEach(element => { element.hidden = active.companies?.tax_regime !== 'pausal'; });
+  document.querySelectorAll('[data-kpo-nav]').forEach(element => { const regime = active.companies?.tax_regime; element.hidden = !['pausal', 'books_vat'].includes(regime); element.innerHTML = '<span>▥</span> Poreske evidencije'; });
   const displayName = [user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ') || user.user_metadata?.name || user.email?.split('@')[0] || 'Korisnik';
   const firstName = displayName.split(/[ ._-]/)[0];
   document.querySelectorAll('[data-user-name]').forEach(element => { element.textContent = displayName; });
