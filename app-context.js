@@ -2,13 +2,14 @@ window.itAntContextReady = (async () => {
   const db = window.itAntSupabase;
   const { data: { user } } = await db.auth.getUser();
   if (!user) return null;
-  const { data: memberships, error } = await db.from('company_users').select('company_id,role,companies(name)').order('created_at');
+  const { data: memberships, error } = await db.from('company_users').select('company_id,role,companies(name,tax_regime)').order('created_at');
   if (error || !memberships?.length) return null;
   const savedId = sessionStorage.getItem('it-ant-active-company');
   const metadataId = user.app_metadata?.active_company_id;
   const active = memberships.find(item => item.company_id === metadataId) || memberships.find(item => item.company_id === savedId) || memberships[0];
   window.itAntActiveCompanyId = active.company_id;
   sessionStorage.setItem('it-ant-active-company', active.company_id);
+  document.querySelectorAll('[data-kpo-nav]').forEach(element => { element.hidden = active.companies?.tax_regime !== 'pausal'; });
   const displayName = [user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ') || user.user_metadata?.name || user.email?.split('@')[0] || 'Korisnik';
   const firstName = displayName.split(/[ ._-]/)[0];
   document.querySelectorAll('[data-user-name]').forEach(element => { element.textContent = displayName; });

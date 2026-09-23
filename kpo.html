@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPO | IT ANT Poslovanje</title>
+  <link rel="stylesheet" href="poslovanje.css?v=24">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="poslovanje.html"><img src="Logo-Transparent.png" alt="IT ANT"><span>Poslovanje</span></a>
+      <nav class="side-nav">
+        <a href="poslovanje.html"><span>⌂</span> Pregled</a><a href="komitenti.html"><span>◉</span> Komitenti</a><a href="racuni.html"><span>▣</span> Računi</a><a href="ponude.html"><span>▤</span> Ponude</a><a href="troskovi.html"><span>↗</span> Troškovi</a><a href="ugovori.html"><span>▤</span> Ugovori</a><a class="active" href="kpo.html" data-kpo-nav><span>▥</span> KPO</a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot"></span> Sve je ažurno</div>
+    </aside>
+    <main class="main-content">
+      <header class="app-header"><div><p class="overline">Poreske evidencije</p><h1>KPO</h1><p class="active-company"><span>Preduzeće:</span> <strong data-company-name>Učitavanje...</strong></p></div><div class="header-actions"><details class="user-menu"><summary><span class="user-chip"><span data-user-initials>--</span><strong data-user-name>Učitavanje...</strong></span><span class="user-menu-chevron" aria-hidden="true">⌄</span></summary><div class="user-menu-panel"><p class="user-menu-label">Nalog</p><strong data-user-name>Korisnik</strong><small data-user-email>Učitavanje...</small><span class="user-menu-divider"></span><label class="user-menu-label" for="company-switch">Aktivno preduzeće</label><select id="company-switch" class="user-company-switch" data-company-switch><option>Učitavanje...</option></select><button class="user-menu-logout logout-button" data-logout type="button">Odjavi se</button></div></details></div></header>
+      <div class="module-page-actions page-actions"><button class="secondary-action table-action" id="print-kpo" type="button">Štampaj</button><button class="secondary-action table-action" id="export-kpo" type="button">Izvezi CSV</button></div>
+      <section class="panel module-intro"><div><p>Knjiga o ostvarenom prometu paušalno oporezovanih obveznika.</p><small class="module-copy">Evidencija se automatski formira iz računa i nije moguće ručno dodavanje ili brisanje stavki.</small></div><span id="kpo-regime-note">Učitavanje poreskog režima...</span></section>
+      <section class="panel invoice-module" id="kpo-module"><div class="invoice-toolbar"><div><p class="overline">Automatska evidencija</p><h2>Promet po godinama</h2></div><div class="search-controls"><label>Godina<select id="kpo-year"></select></label><label>Pretraži<input id="kpo-search" type="search" placeholder="Broj računa ili komitent"></label></div></div><div class="stats-grid kpo-stats"><div class="stat-card"><div class="stat-heading"><span>Ukupan promet</span></div><strong id="kpo-total">0,00 RSD</strong><small id="kpo-count">0 stavki</small></div><div class="stat-card"><div class="stat-heading"><span>Računi</span></div><strong id="kpo-invoice-count">0</strong><small>izdatih dokumenata</small></div><div class="stat-card"><div class="stat-heading"><span>Storna</span></div><strong id="kpo-cancel-count">0</strong><small>korektivnih stavki</small></div></div><div class="table-wrap"><table><thead><tr><th>Rb.</th><th>Datum prometa</th><th>Broj dokumenta</th><th>Komitent</th><th>Opis</th><th>Iznos</th><th>Status</th></tr></thead><tbody id="kpo-list"><tr><td colspan="7" class="empty-state">Učitavanje...</td></tr></tbody></table></div></section>
+      <section class="panel" id="kpo-unavailable" hidden><p class="overline">Poreske evidencije</p><h2>KPO nije primenljiv</h2><p class="module-copy">KPO se prikazuje samo za preduzeća u paušalnom poreskom režimu. Za ovo preduzeće biće dostupna PDV evidencija.</p></section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth-guard.js"></script><script src="app-context.js?v=5"></script><script src="logout.js?v=2"></script><script src="kpo.js?v=1"></script>
+</body>
+</html>
