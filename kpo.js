@@ -90,6 +90,37 @@ function exportExcel() {
   const year = yearSelect.value;
   const rows = entries.filter(entry => String(entry.issue_date || '').startsWith(year));
   const workbook = window.XLSX.utils.book_new();
+  const border = { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } };
+  const baseStyle = { font: { name: 'Calibri', sz: 11, color: { rgb: '000000' } }, alignment: { vertical: 'center' } };
+  const tableHeaderStyle = { ...baseStyle, font: { ...baseStyle.font, bold: true }, border, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
+  const labelStyle = { ...baseStyle, font: { ...baseStyle.font, bold: true } };
+  const titleStyle = { ...baseStyle, font: { ...baseStyle.font, bold: true }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
+  function styleRange(sheet, startRow, endRow, startColumn, endColumn, style) {
+    for (let row = startRow; row <= endRow; row += 1) {
+      for (let column = startColumn; column <= endColumn; column += 1) {
+        const address = window.XLSX.utils.encode_cell({ r: row, c: column });
+        if (sheet[address]) sheet[address].s = style;
+      }
+    }
+  }
+  function styleKpoSheet(sheet, dataLength) {
+    ['A3', 'A4', 'A7', 'A8', 'A11', 'A12'].forEach(address => { if (sheet[address]) sheet[address].s = labelStyle; });
+    if (sheet.A1) sheet.A1.s = { ...titleStyle, font: { ...titleStyle.font, sz: 12 } };
+    if (sheet.A14) sheet.A14.s = titleStyle;
+    styleRange(sheet, 16, 18, 0, 5, tableHeaderStyle);
+    styleRange(sheet, 19, 19 + dataLength - 1, 0, 5, { ...baseStyle, border });
+    for (let row = 19; row < 19 + dataLength; row += 1) {
+      ['E', 'F'].forEach(column => { if (sheet[`${column}${row + 1}`]) sheet[`${column}${row + 1}`].z = '#,##0.00'; });
+      ['A', 'C', 'D', 'E', 'F'].forEach(column => { if (sheet[`${column}${row + 1}`]) sheet[`${column}${row + 1}`].s = { ...baseStyle, border, alignment: { horizontal: column === 'A' ? 'center' : 'right', vertical: 'center' } }; });
+    }
+    const footerStart = 19 + dataLength + 2;
+    [`A${footerStart + 1}`, `E${footerStart + 1}`, `A${footerStart + 2}`, `E${footerStart + 2}`].forEach(address => { if (sheet[address]) sheet[address].s = labelStyle; });
+    sheet['!rows'] = [];
+    sheet['!rows'][0] = { hpt: 20 };
+    sheet['!rows'][13] = { hpt: 30 };
+    sheet['!rows'][16] = { hpt: 34 };
+    sheet['!rows'][17] = { hpt: 34 };
+  }
   if (taxRegime === 'pausal') {
     const headerRows = [
       ['Obrazac KPO'], [], ['PIB', '', companyData.pib || ''], ['Obveznik', '', companyData.responsible_person || companyData.name || ''], [], [],
@@ -104,6 +135,7 @@ function exportExcel() {
     const sheet = window.XLSX.utils.aoa_to_sheet([...headerRows, ...dataRows, [], [], ['Sastavio', '', '', '', 'Odgovorno lice'], ['IT ANT ERP Sistem', '', '', '', companyData.responsible_person || '']]);
     sheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }, { s: { r: 6, c: 2 }, e: { r: 6, c: 5 } }, { s: { r: 7, c: 2 }, e: { r: 7, c: 5 } }, { s: { r: 13, c: 0 }, e: { r: 13, c: 5 } }, { s: { r: 16, c: 0 }, e: { r: 17, c: 0 } }, { s: { r: 16, c: 1 }, e: { r: 17, c: 1 } }, { s: { r: 16, c: 2 }, e: { r: 17, c: 2 } }, { s: { r: 16, c: 3 }, e: { r: 16, c: 4 } }, { s: { r: 16, c: 5 }, e: { r: 17, c: 5 } }];
     sheet['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 24 }, { wch: 20 }, { wch: 20 }, { wch: 24 }];
+    styleKpoSheet(sheet, dataRows.length);
     window.XLSX.utils.book_append_sheet(workbook, sheet, 'KPO');
   } else {
     const outputVat = rows.filter(entry => entry.kind !== 'Ulazni račun').reduce((sum, entry) => sum + entry.vat, 0);
@@ -112,6 +144,11 @@ function exportExcel() {
     const sheet = window.XLSX.utils.aoa_to_sheet(vatRows);
     sheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
     sheet['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 20 }];
+    if (sheet.A1) sheet.A1.s = { ...titleStyle, font: { ...titleStyle.font, sz: 12 } };
+    ['A3', 'A4', 'A5', 'A6'].forEach(address => { if (sheet[address]) sheet[address].s = labelStyle; });
+    styleRange(sheet, 7, 7 + rows.length, 0, 8, { ...baseStyle, border });
+    styleRange(sheet, 7, 7, 0, 8, tableHeaderStyle);
+    ['F', 'G', 'H'].forEach(column => { for (let row = 9; row < 9 + rows.length; row += 1) if (sheet[`${column}${row}`]) sheet[`${column}${row}`].z = '#,##0.00'; });
     window.XLSX.utils.book_append_sheet(workbook, sheet, 'PDV evidencija');
   }
   window.XLSX.writeFile(workbook, `${taxRegime === 'pausal' ? 'KPO' : 'PDV-evidencija'}-${year}.xlsx`);
