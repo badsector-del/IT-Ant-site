@@ -11,10 +11,11 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '
 const signedClass = value => Number(value) < 0 ? 'cancelled' : 'paid';
 let entries = [];
 let taxRegime = 'pausal';
+let companyData = {};
 
 function invoiceEntries(invoices) {
   return invoices.flatMap(invoice => {
-    const original = { id: `${invoice.id}-original`, issue_date: invoice.issue_date, number: invoice.number, partner: invoice.clients?.name || '—', description: 'Izlazni račun', base: Number(invoice.subtotal || invoice.total || 0), vat: Number(invoice.vat_amount || 0), total: Number(invoice.total || 0), kind: 'Izlazni račun', sortOrder: 0 };
+    const original = { id: `${invoice.id}-original`, issue_date: invoice.turnover_date || invoice.issue_date, number: invoice.number, partner: invoice.clients?.name || '—', description: 'Izlazni račun', base: Number(invoice.subtotal || invoice.total || 0), vat: Number(invoice.vat_amount || 0), total: Number(invoice.total || 0), kind: 'Izlazni račun', sortOrder: 0 };
     if (invoice.status !== 'cancelled') return [original];
     return [original, { ...original, id: `${invoice.id}-cancel`, number: `Storno ${invoice.number}`, description: `Storno računa ${invoice.number}`, base: -Math.abs(original.base), vat: -Math.abs(original.vat), total: -Math.abs(original.total), kind: 'Korekcija storna', sortOrder: 1 }];
   });
@@ -61,11 +62,12 @@ function render() {
 async function load() {
   try {
     await window.itAntContextReady;
-    const { data: company, error: companyError } = await db.from('company_users').select('company_id,companies(name,tax_regime)').eq('company_id', window.itAntActiveCompanyId).single();
+    const { data: company, error: companyError } = await db.from('company_users').select('company_id,companies(name,pib,mb,activity_code,responsible_person,address,tax_regime)').eq('company_id', window.itAntActiveCompanyId).single();
     if (companyError) throw companyError;
-    taxRegime = company.companies?.tax_regime || 'pausal';
+    companyData = company.companies || {};
+    taxRegime = companyData.tax_regime || 'pausal';
     if (!['pausal', 'books_vat'].includes(taxRegime)) { modulePanel.hidden = true; unavailablePanel.hidden = false; regimeNote.textContent = 'Za izabrani poreski režim evidencija još nije dostupna.'; return; }
-    const invoiceQuery = db.from('invoices').select('id,number,status,total,subtotal,vat_amount,issue_date,clients(name)').order('issue_date', { ascending: true });
+    const invoiceQuery = db.from('invoices').select('id,number,status,total,subtotal,vat_amount,issue_date,turnover_date,clients(name)').order('turnover_date', { ascending: true });
     const expenseQuery = taxRegime === 'books_vat' ? db.from('expenses').select('id,supplier,invoice_number,expense_date,description,amount,subtotal,vat_amount').order('expense_date', { ascending: true }) : Promise.resolve({ data: [], error: null });
     const [{ data: invoices, error: invoiceError }, { data: expenses, error: expenseError }] = await Promise.all([invoiceQuery, expenseQuery]);
     if (invoiceError) throw invoiceError;
@@ -80,10 +82,40 @@ async function load() {
 yearSelect.addEventListener('change', render);
 searchInput.addEventListener('input', render);
 document.querySelector('#print-kpo').addEventListener('click', () => window.print());
-document.querySelector('#export-kpo').addEventListener('click', () => {
+function exportExcel() {
+  if (!window.XLSX) {
+    window.alert('Excel modul nije učitan. Osvežite stranicu i pokušajte ponovo.');
+    return;
+  }
   const year = yearSelect.value;
   const rows = entries.filter(entry => String(entry.issue_date || '').startsWith(year));
-  const csv = [['Rb.', 'Datum', 'Broj dokumenta', 'Partner', 'Opis', 'Osnovica', 'PDV', 'Ukupno', 'Vrsta'], ...rows.map((entry, index) => [index + 1, formatDate(entry.issue_date), entry.number, entry.partner, entry.description, entry.base.toFixed(2), entry.vat.toFixed(2), entry.total.toFixed(2), entry.kind])].map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(';')).join('\r\n');
-  const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' })); link.download = `Poreske-evidencije-${year}.csv`; link.click(); URL.revokeObjectURL(link.href);
-});
+  const workbook = window.XLSX.utils.book_new();
+  if (taxRegime === 'pausal') {
+    const headerRows = [
+      ['Obrazac KPO'], [], ['PIB', '', companyData.pib || ''], ['Obveznik', '', companyData.responsible_person || companyData.name || ''], [], [],
+      ['Firma - radnje', '', companyData.name || ''], ['Sedište', '', companyData.address || ''], [], [],
+      ['Šifra poreskog obveznika', '', companyData.mb || ''], ['Šifra delatnosti', '', companyData.activity_code || ''], [],
+      [`KNJIGA O OSTVARENOM PROMETU PAUŠALNO OPOREZOVANIH OBVEZNIKA ZA ${year}. GODINU`], [], [],
+      ['Redni broj', '', 'Datum i opis knjiženja', 'PRIHOD OD DELATNOSTI', '', 'SVEGA PRIHODI OD\nDELATNOSTI (3+4)'],
+      ['', '', '', 'od prodaje proizvoda', 'od izvršenih usluga', ''], ['', '', '', '', '', '']
+    ];
+    headerRows[18] = [1, '', 2, 3, 4, 5];
+    const dataRows = rows.map((entry, index) => [index + 1, entry.number, formatDate(entry.issue_date), '', entry.total, entry.total]);
+    const sheet = window.XLSX.utils.aoa_to_sheet([...headerRows, ...dataRows, [], [], ['Sastavio', '', '', '', 'Odgovorno lice'], ['IT ANT ERP Sistem', '', '', '', companyData.responsible_person || '']]);
+    sheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }, { s: { r: 6, c: 2 }, e: { r: 6, c: 5 } }, { s: { r: 7, c: 2 }, e: { r: 7, c: 5 } }, { s: { r: 13, c: 0 }, e: { r: 13, c: 5 } }, { s: { r: 16, c: 0 }, e: { r: 17, c: 0 } }, { s: { r: 16, c: 1 }, e: { r: 17, c: 1 } }, { s: { r: 16, c: 2 }, e: { r: 17, c: 2 } }, { s: { r: 16, c: 3 }, e: { r: 16, c: 4 } }, { s: { r: 16, c: 5 }, e: { r: 17, c: 5 } }];
+    sheet['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 24 }, { wch: 20 }, { wch: 20 }, { wch: 24 }];
+    window.XLSX.utils.book_append_sheet(workbook, sheet, 'KPO');
+  } else {
+    const outputVat = rows.filter(entry => entry.kind !== 'Ulazni račun').reduce((sum, entry) => sum + entry.vat, 0);
+    const inputVat = rows.filter(entry => entry.kind === 'Ulazni račun').reduce((sum, entry) => sum + entry.vat, 0);
+    const vatRows = [['PDV EVIDENCIJA'], [], ['PIB', '', companyData.pib || ''], ['Preduzeće', '', companyData.name || ''], ['MB', '', companyData.mb || ''], ['Adresa', '', companyData.address || ''], [], ['Rb.', 'Datum', 'Broj dokumenta', 'Partner', 'Opis', 'Osnovica', 'PDV', 'Ukupno', 'Vrsta'], ...rows.map((entry, index) => [index + 1, formatDate(entry.issue_date), entry.number, entry.partner, entry.description, entry.base, entry.vat, entry.total, entry.kind]), [], ['Izlazni PDV', '', '', '', '', '', outputVat], ['Ulazni PDV', '', '', '', '', '', inputVat], ['PDV za uplatu', '', '', '', '', '', outputVat - inputVat]];
+    const sheet = window.XLSX.utils.aoa_to_sheet(vatRows);
+    sheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
+    sheet['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 20 }];
+    window.XLSX.utils.book_append_sheet(workbook, sheet, 'PDV evidencija');
+  }
+  window.XLSX.writeFile(workbook, `${taxRegime === 'pausal' ? 'KPO' : 'PDV-evidencija'}-${year}.xlsx`);
+}
+
+document.querySelector('#export-kpo').addEventListener('click', exportExcel);
 load();

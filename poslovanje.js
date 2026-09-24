@@ -12,7 +12,7 @@ const vatFields = document.querySelector('#vat-fields');
 const taxNote = document.querySelector('#tax-note');
 const invoiceDates = document.createElement('div');
 invoiceDates.className = 'form-grid-two';
-invoiceDates.innerHTML = '<label>Datum računa<div class="date-picker" id="invoice-date-picker"><input type="text" data-date-display placeholder="dd.MM.yyyy" readonly><div class="date-calendar" hidden></div><input type="hidden" id="invoice-issue-date" name="issue_date"></div></label><label>Valuta (dana)<input id="invoice-due-days" name="due_days" type="number" min="0" step="1" value="15" required><small id="invoice-due-date-preview" class="tax-note"></small></label>';
+invoiceDates.innerHTML = '<label>Datum računa<div class="date-picker" id="invoice-date-picker"><input type="text" data-date-display placeholder="dd.MM.yyyy" readonly><div class="date-calendar" hidden></div><input type="hidden" id="invoice-issue-date" name="issue_date"></div></label><label>Datum prometa<div class="date-picker" id="invoice-turnover-date-picker"><input type="text" data-date-display placeholder="dd.MM.yyyy" readonly><div class="date-calendar" hidden></div><input type="hidden" id="invoice-turnover-date" name="turnover_date"></div></label><label>Valuta (dana)<input id="invoice-due-days" name="due_days" type="number" min="0" step="1" value="15" required><small id="invoice-due-date-preview" class="tax-note"></small></label>';
 document.querySelector('#client-picker').after(invoiceDates);
 const issueDateInput = document.querySelector('#invoice-issue-date');
 const dueDaysInput = document.querySelector('#invoice-due-days');
@@ -20,6 +20,10 @@ const dueDatePreview = document.querySelector('#invoice-due-date-preview');
 const invoiceDatePicker = document.querySelector('#invoice-date-picker');
 const invoiceDateDisplay = invoiceDatePicker.querySelector('[data-date-display]');
 const invoiceCalendar = invoiceDatePicker.querySelector('.date-calendar');
+const turnoverDateInput = document.querySelector('#invoice-turnover-date');
+const turnoverDatePicker = document.querySelector('#invoice-turnover-date-picker');
+const turnoverDateDisplay = turnoverDatePicker.querySelector('[data-date-display]');
+const turnoverCalendar = turnoverDatePicker.querySelector('.date-calendar');
 const invoiceMonthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
 let invoiceCalendarDate = new Date();
 const invoicePad = value => String(value).padStart(2, '0');
@@ -29,6 +33,12 @@ function setInvoiceDate(value) { issueDateInput.value = value || ''; invoiceDate
 invoiceDateDisplay.addEventListener('click', () => { invoiceCalendar.hidden = !invoiceCalendar.hidden; renderInvoiceCalendar(); });
 invoiceCalendar.addEventListener('click', event => { event.stopPropagation(); const day = event.target.closest('[data-invoice-date]'); if (day) { setInvoiceDate(day.dataset.invoiceDate); calculateDueDate(); invoiceCalendar.hidden = true; return; } if (event.target.closest('[data-invoice-calendar-prev]')) { invoiceCalendarDate.setMonth(invoiceCalendarDate.getMonth() - 1); renderInvoiceCalendar(); } else if (event.target.closest('[data-invoice-calendar-next]')) { invoiceCalendarDate.setMonth(invoiceCalendarDate.getMonth() + 1); renderInvoiceCalendar(); } });
 document.addEventListener('click', event => { if (!invoiceDatePicker.contains(event.target)) invoiceCalendar.hidden = true; });
+let turnoverCalendarDate = new Date();
+function renderTurnoverCalendar() { const first = new Date(turnoverCalendarDate.getFullYear(), turnoverCalendarDate.getMonth(), 1); const days = new Date(turnoverCalendarDate.getFullYear(), turnoverCalendarDate.getMonth() + 1, 0).getDate(); const start = (first.getDay() + 6) % 7; const cells = Array.from({ length: start }, () => '<span></span>'); for (let day = 1; day <= days; day += 1) { const iso = `${turnoverCalendarDate.getFullYear()}-${invoicePad(turnoverCalendarDate.getMonth() + 1)}-${invoicePad(day)}`; cells.push(`<button type="button" class="calendar-day ${iso === turnoverDateInput.value ? 'selected' : ''}" data-turnover-date="${iso}">${day}</button>`); } turnoverCalendar.innerHTML = `<div class="calendar-head"><button type="button" data-turnover-calendar-prev>‹</button><strong>${invoiceMonthNames[turnoverCalendarDate.getMonth()]} ${turnoverCalendarDate.getFullYear()}</strong><button type="button" data-turnover-calendar-next>›</button></div><div class="calendar-week"><span>Po</span><span>Ut</span><span>Sr</span><span>Če</span><span>Pe</span><span>Su</span><span>Ne</span></div><div class="calendar-grid">${cells.join('')}</div>`; }
+function setTurnoverDate(value) { turnoverDateInput.value = value || ''; turnoverDateDisplay.value = invoiceDisplayDate(value); if (value) turnoverCalendarDate = new Date(`${value}T12:00:00`); renderTurnoverCalendar(); }
+turnoverDateDisplay.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); turnoverCalendar.hidden = !turnoverCalendar.hidden; renderTurnoverCalendar(); });
+turnoverCalendar.addEventListener('click', event => { event.stopPropagation(); const day = event.target.closest('[data-turnover-date]'); if (day) { setTurnoverDate(day.dataset.turnoverDate); turnoverCalendar.hidden = true; return; } if (event.target.closest('[data-turnover-calendar-prev]')) { turnoverCalendarDate.setMonth(turnoverCalendarDate.getMonth() - 1); renderTurnoverCalendar(); } else if (event.target.closest('[data-turnover-calendar-next]')) { turnoverCalendarDate.setMonth(turnoverCalendarDate.getMonth() + 1); renderTurnoverCalendar(); } });
+document.addEventListener('click', event => { if (!turnoverDatePicker.contains(event.target)) turnoverCalendar.hidden = true; });
 const db = window.itAntSupabase;
 let entryType = 'invoice';
 let companySettings = null;
@@ -106,7 +116,7 @@ const openModal = type => {
   clientSelect.required = type === 'invoice';
   form.amount.required = type !== 'invoice';
   form.reset();
-  if (type === 'invoice') { setInvoiceDate(isoToday()); dueDaysInput.value = '15'; calculateDueDate(); }
+  if (type === 'invoice') { setInvoiceDate(isoToday()); setTurnoverDate(isoToday()); dueDaysInput.value = '15'; calculateDueDate(); }
   resetItems();
   itemList.querySelectorAll('input').forEach(input => { input.required = type === 'invoice'; });
   if (type === 'invoice') { populateClients(); loadCompanySettings(); }
@@ -152,7 +162,7 @@ form.addEventListener('submit', async event => {
     await window.itAntContextReady;
     const { data: membership, error: membershipError } = await db.from('company_users').select('company_id').eq('company_id', window.itAntActiveCompanyId).single();
     if (membershipError) { alert('Korisnik nije povezan sa preduzećem.'); return; }
-    const invoicePayload = { company_id: membership.company_id, client_id: data.client, status: data.status, total: data.amount, subtotal: data.subtotal, vat_rate: data.vat_rate, vat_amount: data.vat_amount, tax_regime: companySettings?.tax_regime || 'pausal', issue_date: data.issue_date || isoToday(), due_date: calculateDueDate(), notes: null, updated_at: new Date().toISOString() };
+    const invoicePayload = { company_id: membership.company_id, client_id: data.client, status: data.status, total: data.amount, subtotal: data.subtotal, vat_rate: data.vat_rate, vat_amount: data.vat_amount, tax_regime: companySettings?.tax_regime || 'pausal', issue_date: data.issue_date || isoToday(), turnover_date: data.turnover_date || data.issue_date || isoToday(), due_date: calculateDueDate(), notes: null, updated_at: new Date().toISOString() };
     if (editingInvoiceId) {
       const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const { data: updated, error: updateError } = await db.from('invoices').update(invoicePayload).eq('id', editingInvoiceId).gt('created_at', cutoff).neq('status', 'cancelled').select('id').maybeSingle();
@@ -222,11 +232,11 @@ async function renderDashboard() {
 renderDashboard();
 if (window.location.hash === '#novi-racun') openModal('invoice');
 async function loadEditInvoice(id) {
-  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,issue_date,due_date,invoice_items(description,quantity,unit_price,vat_rate,vat_treatment)').eq('id', id).single();
+  const { data: invoice, error } = await db.from('invoices').select('id,client_id,status,issue_date,turnover_date,due_date,invoice_items(description,quantity,unit_price,vat_rate,vat_treatment)').eq('id', id).single();
   if (error || !invoice) return;
   editingInvoiceId = id; openModal('invoice');
   await populateClients(); await loadCompanySettings();
-  clientSelect.value = invoice.client_id; form.status.value = invoice.status; setInvoiceDate(invoice.issue_date || isoToday()); const daysUntilDue = invoice.due_date ? Math.max(0, Math.round((new Date(`${invoice.due_date}T12:00:00`) - new Date(`${issueDateInput.value}T12:00:00`)) / 86400000)) : 15; dueDaysInput.value = String(daysUntilDue); calculateDueDate(); resetItems();
+  clientSelect.value = invoice.client_id; form.status.value = invoice.status; setInvoiceDate(invoice.issue_date || isoToday()); setTurnoverDate(invoice.turnover_date || invoice.issue_date || isoToday()); const daysUntilDue = invoice.due_date ? Math.max(0, Math.round((new Date(`${invoice.due_date}T12:00:00`) - new Date(`${issueDateInput.value}T12:00:00`)) / 86400000)) : 15; dueDaysInput.value = String(daysUntilDue); calculateDueDate(); resetItems();
   itemList.innerHTML = invoice.invoice_items.map(item => { const vatValue = item.vat_treatment === 'exempt_right' || item.vat_treatment === 'exempt_no' ? item.vat_treatment : String(item.vat_rate ?? 20); return `<div class="item-row"><input class="item-description" value="${item.description}" required><button class="remove-item" type="button" aria-label="Obriši stavku">×</button><input class="item-quantity" type="number" min="0.01" step="0.01" value="${item.quantity}" aria-label="Količina" required><input class="item-price" type="number" min="0" step="0.01" value="${item.unit_price}" aria-label="Cena" required><select class="item-vat" aria-label="PDV tretman"><option value="20" ${vatValue === '20' ? 'selected' : ''}>20% - Opšta</option><option value="10" ${vatValue === '10' ? 'selected' : ''}>10% - Posebna</option><option value="exempt_right" ${vatValue === 'exempt_right' ? 'selected' : ''}>Oslobođeno sa pravom</option><option value="exempt_no" ${vatValue === 'exempt_no' ? 'selected' : ''}>Oslobođeno bez prava</option></select></div>`; }).join('');
   itemList.querySelectorAll('.item-vat').forEach(select => { select.disabled = companySettings?.tax_regime !== 'books_vat'; select.classList.toggle('vat-visible', companySettings?.tax_regime === 'books_vat'); });
   modalTitle.textContent = 'Izmeni račun';
